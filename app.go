@@ -25,12 +25,11 @@ func NewApp() *App {
 }
 
 func (a *App) Run(arguments []string) {
-	a.Commands = append(a.Commands, helpCommand)
-	a.Flags = append(
-		a.Flags,
-		BoolFlag{"version", "print the version"},
-		helpFlag{"show help"},
-	)
+	if a.Command(helpCommand.Name) == nil {
+		a.Commands = append(a.Commands, helpCommand)
+	}
+	a.appendFlag(BoolFlag{"version", "print the version"})
+	a.appendFlag(helpFlag{"show help"})
 	set := flagSet(a.Name, a.Flags)
 	set.SetOutput(ioutil.Discard)
 	err := set.Parse(arguments[1:])
@@ -47,12 +46,35 @@ func (a *App) Run(arguments []string) {
 	args := context.Args()
 	if len(args) > 0 {
 		name := args[0]
-		for _, c := range a.Commands {
-			if c.HasName(name) {
-				c.Run(context)
-				return
-			}
+		c := a.Command(name)
+		if c != nil {
+			c.Run(context)
+			return
 		}
 	}
 	a.Action(context)
+}
+
+func (a *App) Command(name string) *Command {
+	for _, c := range a.Commands {
+		if c.HasName(name) {
+			return &c
+		}
+	}
+	return nil
+}
+
+func (a *App) hasFlag(flag Flag) bool {
+	for _, f := range a.Flags {
+		if flag == f {
+			return true
+		}
+	}
+	return false
+}
+
+func (a *App) appendFlag(flag Flag) {
+	if !a.hasFlag(flag) {
+		a.Flags = append(a.Flags, flag)
+	}
 }
