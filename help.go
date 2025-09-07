@@ -38,32 +38,6 @@ OPTIONS:
    {{end}}
 `
 
-var ManPageTemplate = `.\"             -*-Nroff-*-
-.\"
-.TH "{{.Name}}" 1 "{{.Compiled.Day}} {{.Compiled.Month}} {{.Compiled.Year}}" "" ""
-.SH NAME
-{{.Name}} \- {{.Usage}}
-.SH SYNOPSIS
-.B {{.Name}}
-.nf
-command {{.Name}} [command options] [arguments...]
-.fi
-.SH COMMANDS
-.nf
-{{range .Commands}}{{.Name}}{{with .ShortName}}, {{.}}{{end}}{{ "\t" }}{{.Usage}}
-{{end}}
-.fi
-.SH OPTIONS
-.nf
-{{range .Flags}}{{.}}
-{{end}}
-.fi
-.SH VERSION
-.B {{.Version}}
-.SH AUTHOR
-.B {{.Name}} was written by {{.Author}} <{{.Email}}>
-`
-
 var helpCommand = Command{
 	Name:      "help",
 	ShortName: "h",
@@ -80,10 +54,6 @@ var helpCommand = Command{
 
 func ShowAppHelp(c *Context) {
 	printHelp(AppHelpTemplate, c.App)
-}
-
-func GenerateManPage(c *Context) {
-	printHelp(ManPageTemplate, c.App)
 }
 
 func ShowCommandHelp(c *Context, command string) {
