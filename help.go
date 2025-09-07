@@ -58,6 +58,15 @@ func ShowAppHelp(c *Context) {
 	HelpPrinter(AppHelpTemplate, c.App)
 }
 
+func DefaultAppComplete(c *Context) {
+	for _, command := range c.App.Commands {
+		fmt.Println(command.Name)
+		if command.ShortName != "" {
+			fmt.Println(command.ShortName)
+		}
+	}
+}
+
 func ShowCommandHelp(c *Context, command string) {
 	for _, c := range c.App.Commands {
 		if c.HasName(command) {
@@ -77,11 +86,9 @@ func ShowVersion(c *Context) {
 }
 
 func ShowCompletions(c *Context) {
-	for _, command := range c.App.Commands {
-		fmt.Println(command.Name)
-		if command.ShortName != "" {
-			fmt.Println(command.ShortName)
-		}
+	a := c.App
+	if a != nil && a.BashComplete != nil {
+		a.BashComplete(c)
 	}
 }
 
@@ -130,7 +137,7 @@ func checkCommandHelp(c *Context, name string) bool {
 }
 
 func checkCompletions(c *Context) bool {
-	if c.GlobalBool("generate-bash-completion") {
+	if c.GlobalBool(BashCompletionFlag.Name) && c.App.EnableBashCompletion {
 		ShowCompletions(c)
 		return true
 	}
@@ -138,7 +145,7 @@ func checkCompletions(c *Context) bool {
 }
 
 func checkCommandCompletions(c *Context, name string) bool {
-	if c.Bool("generate-bash-completion") {
+	if c.Bool(BashCompletionFlag.Name) && c.App.EnableBashCompletion {
 		ShowCommandCompletions(c, name)
 		return true
 	}

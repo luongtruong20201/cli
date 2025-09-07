@@ -51,6 +51,10 @@ func (c *Context) IntSlice(name string) []int {
 	return lookupIntSlice(name, c.flagSet)
 }
 
+func (c *Context) Generic(name string) interface{} {
+	return lookupGeneric(name, c.flagSet)
+}
+
 func (c *Context) GlobalInt(name string) int {
 	return lookupInt(name, c.globalSet)
 }
@@ -162,6 +166,13 @@ func lookupIntSlice(name string, set *flag.FlagSet) []int {
 
 	}
 
+	return nil
+}
+
+func lookupGeneric(name string, set *flag.FlagSet) interface{} {
+	if f := set.Lookup(name); f != nil {
+		return (f.Value.(Generic)).Value()
+	}
 	return nil
 }
 

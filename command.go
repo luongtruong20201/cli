@@ -7,21 +7,24 @@ import (
 )
 
 type Command struct {
-	Name         string
-	ShortName    string
-	Usage        string
-	Description  string
-	BashComplete func(context *Context)
-	Action       func(context *Context)
-	Flags        []Flag
+	Name            string
+	ShortName       string
+	Usage           string
+	Description     string
+	BashComplete    func(context *Context)
+	Action          func(context *Context)
+	Flags           []Flag
+	SkipFlagParsing bool
 }
 
 func (c Command) Run(ctx *Context) error {
 	c.Flags = append(
 		c.Flags,
-		BoolFlag{"generate-bash-completion", ""},
 		BoolFlag{"help, h", "show help"},
 	)
+	if ctx.App.EnableBashCompletion {
+		c.Flags = append(c.Flags, BashCompletionFlag)
+	}
 	set := flagSet(c.Name, c.Flags)
 	set.SetOutput(ioutil.Discard)
 
@@ -33,7 +36,7 @@ func (c Command) Run(ctx *Context) error {
 		}
 	}
 	var err error
-	if firstFlagIndex > -1 {
+	if firstFlagIndex > -1 && !c.SkipFlagParsing {
 		args := ctx.Args()
 		regularArgs := args[1:firstFlagIndex]
 		flagArgs := args[firstFlagIndex:]

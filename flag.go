@@ -7,6 +7,11 @@ import (
 	"strings"
 )
 
+var BashCompletionFlag = BoolFlag{
+	Name:  "generate-bash-completion",
+	Usage: "",
+}
+
 type Flag interface {
 	fmt.Stringer
 	Apply(*flag.FlagSet)
@@ -28,6 +33,32 @@ func eachName(longName string, fn func(string)) {
 		name = strings.Trim(name, " ")
 		fn(name)
 	}
+}
+
+type Generic interface {
+	Set(string) error
+	String() string
+	Value() interface{}
+}
+
+type GenericFlag struct {
+	Name  string
+	Value Generic
+	Usage string
+}
+
+func (f GenericFlag) String() string {
+	return fmt.Sprintf("%s%s %v\t`%v` %s", prefixFor(f.Name), f.Name, f.Value, "-"+f.Name+" option -"+f.Name+" option", f.Usage)
+}
+
+func (f GenericFlag) Apply(set *flag.FlagSet) {
+	eachName(f.Name, func(name string) {
+		set.Var(f.Value, name, f.Usage)
+	})
+}
+
+func (f GenericFlag) getName() string {
+	return f.Name
 }
 
 type StringSlice []string

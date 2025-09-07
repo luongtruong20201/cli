@@ -8,17 +8,19 @@ import (
 )
 
 type App struct {
-	Name            string
-	Usage           string
-	Version         string
-	Commands        []Command
-	Flags           []Flag
-	Before          func(context *Context) error
-	Action          func(context *Context)
-	CommandNotFound func(context *Context, command string)
-	Compiled        time.Time
-	Author          string
-	Email           string
+	Name                 string
+	Usage                string
+	Version              string
+	Commands             []Command
+	Flags                []Flag
+	EnableBashCompletion bool
+	BashComplete         func(context *Context)
+	Before               func(context *Context) error
+	Action               func(context *Context)
+	CommandNotFound      func(context *Context, command string)
+	Compiled             time.Time
+	Author               string
+	Email                string
 }
 
 func compileTime() time.Time {
@@ -31,13 +33,14 @@ func compileTime() time.Time {
 
 func NewApp() *App {
 	return &App{
-		Name:     os.Args[0],
-		Usage:    "A new cli application",
-		Version:  "0.0.0",
-		Action:   helpCommand.Action,
-		Compiled: compileTime(),
-		Author:   "Author",
-		Email:    "unknown@email",
+		Name:         os.Args[0],
+		Usage:        "A new cli application",
+		Version:      "0.0.0",
+		BashComplete: DefaultAppComplete,
+		Action:       helpCommand.Action,
+		Compiled:     compileTime(),
+		Author:       "Author",
+		Email:        "unknown@email",
 	}
 }
 
@@ -45,7 +48,9 @@ func (a *App) Run(arguments []string) error {
 	if a.Command(helpCommand.Name) == nil {
 		a.Commands = append(a.Commands, helpCommand)
 	}
-	a.appendFlag(BoolFlag{"generate-bash-completion", ""})
+	if a.EnableBashCompletion {
+		a.appendFlag(BashCompletionFlag)
+	}
 	a.appendFlag(BoolFlag{"version, v", "print the version"})
 	a.appendFlag(BoolFlag{"help, h", "show help"})
 	set := flagSet(a.Name, a.Flags)
