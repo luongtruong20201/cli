@@ -1,35 +1,21 @@
+// Package cli provides a minimal framework for creating and organizing command line
+// Go applications. cli is designed to be easy to understand and write, the most simple
+// cli application can be written as follows:
+//
+//	func main() {
+//	  cli.NewApp().Run(os.Args)
+//	}
+//
+// Of course this application does not do much, so let's make this an actual application:
+//
+//	func main() {
+//	  app := cli.NewApp()
+//	  app.Name = "greet"
+//	  app.Usage = "say a greeting"
+//	  app.Action = func(c *cli.Context) {
+//	    println("Greetings")
+//	  }
+//
+//	  app.Run(os.Args)
+//	}
 package cli
-
-// var (
-// 	Name     = os.Args[0]
-// 	Usage    = "<No Description>"
-// 	Version  = "0.0.0"
-// 	Commands []Command
-// 	Flags    []Flag
-// 	Action   = ShowHelp
-// )
-
-// func Run(arguments []string) {
-// 	set := flagSet(Flags)
-// 	set.Parse(arguments[1:])
-// 	context := NewContext(set, set)
-// 	args := context.Args()
-// 	if len(args) > 0 {
-// 		name := args[0]
-// 		for _, c := range append(Commands, HelpCommand) {
-// 			if c.HasName(name) {
-// 				locals := flagSet(c.Flags)
-// 				locals.Parse(args[1:])
-// 				c.Run(context)
-// 				return
-// 			}
-// 		}
-// 	}
-// 	Action(context)
-// }
-
-// func CommandsWithDefaults() []Command {
-// 	return append(append([]Command(nil), HelpCommand), Commands...)
-// }
-
-type Handler func(context *Context)

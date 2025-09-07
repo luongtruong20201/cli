@@ -43,11 +43,19 @@ func (a *App) Run(arguments []string) error {
 	if a.Command(helpCommand.Name) == nil {
 		a.Commands = append(a.Commands, helpCommand)
 	}
-	a.appendFlag(BoolFlag{"version", "print the version"})
-	a.appendFlag(helpFlag{"show help"})
+	a.appendFlag(BoolFlag{"version, v", "print the version"})
+	a.appendFlag(BoolFlag{"help, h", "show help"})
 	set := flagSet(a.Name, a.Flags)
 	set.SetOutput(ioutil.Discard)
 	err := set.Parse(arguments[1:])
+	nerr := normalizeFlags(a.Flags, set)
+	if nerr != nil {
+		fmt.Println(nerr)
+		context := NewContext(a, set, set)
+		ShowAppHelp(context)
+		fmt.Println("")
+		return nerr
+	}
 	context := NewContext(a, set, set)
 	if err != nil {
 		fmt.Printf("Incorrect Usage.\n\n")

@@ -18,7 +18,7 @@ type Command struct {
 func (c Command) Run(ctx *Context) error {
 	c.Flags = append(
 		c.Flags,
-		helpFlag{"show help"},
+		BoolFlag{"help, h", "show help"},
 	)
 	set := flagSet(c.Name, c.Flags)
 	set.SetOutput(ioutil.Discard)
@@ -44,6 +44,14 @@ func (c Command) Run(ctx *Context) error {
 		ShowCommandHelp(ctx, c.Name)
 		fmt.Println("")
 		return err
+	}
+	nerr := normalizeFlags(c.Flags, set)
+	if nerr != nil {
+		fmt.Println(nerr)
+		fmt.Println("")
+		ShowCommandHelp(ctx, c.Name)
+		fmt.Println("")
+		return nerr
 	}
 	context := NewContext(ctx.App, set, ctx.globalSet)
 	if checkCommandHelp(context, c.Name) {
