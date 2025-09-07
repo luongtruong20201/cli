@@ -65,7 +65,6 @@ func ShowCommandHelp(c *Context, command string) {
 	}
 
 	fmt.Printf("No help topic for '%v'\n", command)
-	os.Exit(1)
 }
 
 func ShowVersion(c *Context) {
@@ -79,23 +78,26 @@ func printHelp(templ string, data interface{}) {
 	w.Flush()
 }
 
-func checkVersion(c *Context) {
+func checkVersion(c *Context) bool {
 	if c.GlobalBool("version") {
 		ShowVersion(c)
-		os.Exit(0)
+		return true
 	}
+	return false
 }
 
-func checkHelp(c *Context) {
+func checkHelp(c *Context) bool {
 	if c.GlobalBool("h") || c.GlobalBool("help") {
 		ShowAppHelp(c)
-		os.Exit(0)
+		return true
 	}
+	return false
 }
 
-func checkCommandHelp(c *Context, name string) {
+func checkCommandHelp(c *Context, name string) bool {
 	if c.Bool("h") || c.Bool("help") {
 		ShowCommandHelp(c, name)
-		os.Exit(0)
+		return true
 	}
+	return false
 }

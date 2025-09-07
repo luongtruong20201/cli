@@ -3,7 +3,6 @@ package cli
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 )
 
 type Command struct {
@@ -15,7 +14,7 @@ type Command struct {
 	Flags       []Flag
 }
 
-func (c Command) Run(ctx *Context) {
+func (c Command) Run(ctx *Context) error {
 	c.Flags = append(
 		c.Flags,
 		helpFlag{"show help"},
@@ -28,11 +27,14 @@ func (c Command) Run(ctx *Context) {
 		fmt.Println("Incorrect Usage.")
 		ShowCommandHelp(ctx, c.Name)
 		fmt.Println("")
-		os.Exit(1)
+		return err
 	}
 	context := NewContext(ctx.App, set, ctx.globalSet)
-	checkCommandHelp(context, c.Name)
+	if checkCommandHelp(context, c.Name) {
+		return nil
+	}
 	c.Action(context)
+	return nil
 }
 
 func (c Command) HasName(name string) bool {

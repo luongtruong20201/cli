@@ -27,9 +27,11 @@ func TestApp_Run(t *testing.T) {
 	app.Action = func(c *cli.Context) {
 		s = s + c.Args()[0]
 	}
-	app.Run([]string{"command", "foo"})
-	app.Run([]string{"command", "bar"})
-	expect(t, s, "foobar")
+	err := app.Run([]string{"command", "foo"})
+	expect(t, err, nil)
+	err = app.Run([]string{"command", "bar"})
+	expect(t, err, nil)
+
 }
 
 var commandAppTests = []struct {
@@ -54,5 +56,75 @@ func TestApp_Command(t *testing.T) {
 	}
 	for _, test := range commandAppTests {
 		expect(t, app.Command(test.name) != nil, test.expected)
+	}
+}
+
+func TestApp_CommandWithArgBeforeFlags(t *testing.T) {
+	var parsedOption, firstArg string
+	app := cli.NewApp()
+	command := cli.Command{
+		Name: "cmd",
+		Flags: []cli.Flag{
+			cli.StringFlag{"option", "", "some option"},
+		},
+		Action: func(c *cli.Context) {
+			parsedOption = c.String("option")
+			firstArg = c.Args()[0]
+		},
+	}
+	app.Commands = []cli.Command{command}
+	app.Run([]string{"", "cmd", "my-arg", "--option", "my-option"})
+	expect(t, parsedOption, "my-option")
+	expect(t, firstArg, "my-arg")
+}
+
+func TestApp_ParseSliceFlags(t *testing.T) {
+	var parsedIntSlice []int
+	var parsedStringSlice []string
+	app := cli.NewApp()
+	command := cli.Command{
+		Name: "cmd",
+		Flags: []cli.Flag{
+			cli.IntSliceFlag{"p", &cli.IntSlice{}, "set one or more ip addr"},
+			cli.StringSliceFlag{"ip", &cli.StringSlice{}, "set one or more ports to open"},
+		},
+		Action: func(c *cli.Context) {
+			parsedIntSlice = c.IntSlice("p")
+			parsedStringSlice = c.StringSlice("ip")
+		},
+	}
+	app.Commands = []cli.Command{command}
+	app.Run([]string{"", "cmd", "my-arg", "-p", "22", "-p", "80", "-ip", "8.8.8.8", "-ip", "8.8.4.4"})
+	IntsEquals := func(a, b []int) bool {
+		if len(a) != len(b) {
+			return false
+		}
+		for i, v := range a {
+			if v != b[i] {
+				return false
+			}
+		}
+		return true
+	}
+	StrsEquals := func(a, b []string) bool {
+		if len(a) != len(b) {
+			return false
+		}
+		for i, v := range a {
+			if v != b[i] {
+				return false
+			}
+		}
+		return true
+	}
+	var expectedIntSlice = []int{22, 80}
+	var expectedStringSlice = []string{"8.8.8.8", "8.8.4.4"}
+
+	if !IntsEquals(parsedIntSlice, expectedIntSlice) {
+		t.Errorf("%v does not match %v", parsedIntSlice, expectedIntSlice)
+	}
+
+	if !StrsEquals(parsedStringSlice, expectedStringSlice) {
+		t.Errorf("%v does not match %v", parsedStringSlice, expectedStringSlice)
 	}
 }

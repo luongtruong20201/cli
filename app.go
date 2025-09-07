@@ -24,7 +24,7 @@ func NewApp() *App {
 	}
 }
 
-func (a *App) Run(arguments []string) {
+func (a *App) Run(arguments []string) error {
 	if a.Command(helpCommand.Name) == nil {
 		a.Commands = append(a.Commands, helpCommand)
 	}
@@ -39,20 +39,24 @@ func (a *App) Run(arguments []string) {
 		fmt.Println("Incorrect Usage.")
 		ShowAppHelp(context)
 		fmt.Println("")
-		os.Exit(1)
+		return err
 	}
-	checkHelp(context)
-	checkVersion(context)
+	if checkHelp(context) {
+		return nil
+	}
+	if checkVersion(context) {
+		return nil
+	}
 	args := context.Args()
 	if len(args) > 0 {
 		name := args[0]
 		c := a.Command(name)
 		if c != nil {
-			c.Run(context)
-			return
+			return c.Run(context)
 		}
 	}
 	a.Action(context)
+	return nil
 }
 
 func (a *App) Command(name string) *Command {
