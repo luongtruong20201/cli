@@ -184,6 +184,14 @@ func lookupBoolT(name string, set *flag.FlagSet) bool {
 	return false
 }
 
+func copyFlag(name string, ff *flag.Flag, set *flag.FlagSet) {
+	switch ff.Value.(type) {
+	case *StringSlice:
+	default:
+		set.Set(name, ff.Value.String())
+	}
+}
+
 func normalizeFlags(flags []Flag, set *flag.FlagSet) error {
 	visited := make(map[string]bool)
 	set.Visit(func(f *flag.Flag) {
@@ -209,7 +217,9 @@ func normalizeFlags(flags []Flag, set *flag.FlagSet) error {
 		}
 		for _, name := range parts {
 			name = strings.Trim(name, " ")
-			set.Set(name, ff.Value.String())
+			if !visited[name] {
+				copyFlag(name, ff, set)
+			}
 		}
 	}
 	return nil
