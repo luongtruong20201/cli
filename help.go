@@ -65,8 +65,11 @@ func ShowCommandHelp(c *Context, command string) {
 			return
 		}
 	}
-
-	fmt.Printf("No help topic for '%v'\n", command)
+	if c.App.CommandNotFound != nil {
+		c.App.CommandNotFound(c, command)
+	} else {
+		fmt.Printf("No help topic for '%v'\n", command)
+	}
 }
 
 func ShowVersion(c *Context) {

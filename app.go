@@ -8,16 +8,17 @@ import (
 )
 
 type App struct {
-	Name     string
-	Usage    string
-	Version  string
-	Commands []Command
-	Flags    []Flag
-	Before   func(context *Context) error
-	Action   func(context *Context)
-	Compiled time.Time
-	Author   string
-	Email    string
+	Name            string
+	Usage           string
+	Version         string
+	Commands        []Command
+	Flags           []Flag
+	Before          func(context *Context) error
+	Action          func(context *Context)
+	CommandNotFound func(context *Context, command string)
+	Compiled        time.Time
+	Author          string
+	Email           string
 }
 
 func compileTime() time.Time {

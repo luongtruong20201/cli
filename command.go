@@ -57,6 +57,7 @@ func (c Command) Run(ctx *Context) error {
 	if checkCommandHelp(context, c.Name) {
 		return nil
 	}
+	context.Command = c
 	c.Action(context)
 	return nil
 }

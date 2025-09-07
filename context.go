@@ -9,13 +9,18 @@ import (
 
 type Context struct {
 	App       *App
+	Command   Command
 	flagSet   *flag.FlagSet
 	globalSet *flag.FlagSet
 	setFlags  map[string]bool
 }
 
 func NewContext(app *App, set *flag.FlagSet, globalSet *flag.FlagSet) *Context {
-	return &Context{app, set, globalSet, nil}
+	return &Context{
+		App:       app,
+		flagSet:   set,
+		globalSet: globalSet,
+	}
 }
 
 func (c *Context) Int(name string) int {

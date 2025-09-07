@@ -240,3 +240,22 @@ func TestAppHelpPrinter(t *testing.T) {
 		t.Errorf("Help printer expected to be called, but was not")
 	}
 }
+
+func TestAppCommandNotFound(t *testing.T) {
+	beforeRun, subcommandRun := false, false
+	app := cli.NewApp()
+	app.CommandNotFound = func(ctx *cli.Context, command string) {
+		beforeRun = true
+	}
+	app.Commands = []cli.Command{
+		{
+			Name: "bar",
+			Action: func(c *cli.Context) {
+				subcommandRun = true
+			},
+		},
+	}
+	app.Run([]string{"command", "foo"})
+	expect(t, beforeRun, true)
+	expect(t, subcommandRun, false)
+}
