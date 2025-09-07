@@ -1,10 +1,11 @@
-# Work in Progress
-
-This package is not in a releasable state. Stay tuned as I try to crank this API out in the next week or so.
+[![Build Status](https://travis-ci.org/codegangsta/cli.png?branch=master)](https://travis-ci.org/codegangsta/cli)
 
 # cli.go
 
 cli.go is simple, fast, and fun package for building command line apps in Go. The goal is to enable developers to write fast and distributable command line applications in an expressive way.
+
+You can view the API docs here:
+http://godoc.org/github.com/codegangsta/cli
 
 ## Overview
 
@@ -14,7 +15,7 @@ This is where cli.go comes into play. cli.go makes command line programming fun,
 
 ## Installation
 
-Make sure you have the a working Go environment. [See the install instructions](http://golang.org/doc/install.html).
+Make sure you have the a working Go environment (go 1.1 is _required_). [See the install instructions](http://golang.org/doc/install.html).
 
 To install cli.go, simply run:
 
@@ -28,6 +29,47 @@ Make sure your PATH includes to the `$GOPATH/bin` directory so your commands can
 export PATH=$PATH:$GOPATH/bin
 ```
 
+## Getting Started
+
+One of the philosophies behind cli.go is that an API should be playful and full of discovery. So a cli.go app can be as little as one line of code in `main()`.
+
+```go
+package main
+
+import (
+  "os"
+  "github.com/codegangsta/cli"
+)
+
+func main() {
+  cli.NewApp().Run(os.Args)
+}
+```
+
+This app will run and show help text, but is not very useful. Let's give an action to execute and some help documentation:
+
+```go
+package main
+
+import (
+  "os"
+  "github.com/codegangsta/cli"
+)
+
+func main() {
+  app := cli.NewApp()
+  app.Name = "boom"
+  app.Usage = "make an explosive entrance"
+  app.Action = func(c *cli.Context) {
+    println("boom! I say!")
+  }
+
+  app.Run(os.Args)
+}
+```
+
+Running this already gives you a ton of functionality, plus support for things like subcommands and flags, which are covered below.
+
 ## Example
 
 Being a programmer can be a lonely job. Thankfully by the power of automation that is not the case! Let's create a greeter app to fend off our demons of loneliness!
@@ -36,17 +78,20 @@ Being a programmer can be a lonely job. Thankfully by the power of automation th
 /* greet.go */
 package main
 
-import "os"
-import "github.com/codegangsta/cli"
+import (
+  "os"
+  "github.com/codegangsta/cli"
+)
 
 func main() {
-  cli.Name = "greet"
-  cli.Usage = "fight the loneliness!"
-  cli.Action = func(c cli.Context) {
+  app := cli.NewApp()
+  app.Name = "greet"
+  app.Usage = "fight the loneliness!"
+  app.Action = func(c *cli.Context) {
     println("Hello friend!")
   }
 
-  cli.Run(os.Args)
+  app.Run(os.Args)
 }
 ```
 
@@ -85,15 +130,65 @@ GLOBAL OPTIONS
 
 ### Arguments
 
-WIP
+You can lookup arguments by calling the `Args` function on cli.Context.
+
+```go
+...
+app.Action = func(c *cli.Context) {
+  println("Hello", c.Args()[0])
+}
+...
+```
 
 ### Flags
 
-WIP
+Setting and querying flags is simple.
+
+```go
+...
+app.Flags = []cli.Flag {
+  cli.StringFlag{"lang", "english", "language for the greeting"},
+}
+app.Action = func(c *cli.Context) {
+  name := "someone"
+  if len(c.Args()) > 0 {
+    name = c.Args()[0]
+  }
+  if c.String("lang") == "spanish" {
+    println("Hola", name)
+  } else {
+    println("Hello", name)
+  }
+}
+...
+```
 
 ### Subcommands
 
-WIP
+Subcommands can be defined for a more git-like command line app.
+
+```go
+...
+app.Commands = []cli.Command{
+  {
+    Name:      "add",
+    ShortName: "a",
+    Usage:     "add a task to the list",
+    Action: func(c *cli.Context) {
+      println("added task: ", c.FirstArg())
+    },
+  },
+  {
+    Name:      "complete",
+    ShortName: "c",
+    Usage:     "complete a task on the list",
+    Action: func(c *cli.Context) {
+      println("completed task: ", c.FirstArg())
+    },
+  },
+}
+...
+```
 
 ## About
 

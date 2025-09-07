@@ -102,3 +102,15 @@ func (c *Context) lookupBool(name string, set *flag.FlagSet) bool {
 	}
 	return false
 }
+
+func (c *Context) GetArg(n int) string {
+	args := c.Args()
+	if len(args) < n {
+		return args[n]
+	}
+	return ""
+}
+
+func (c *Context) FirstArg() string {
+	return c.GetArg(0)
+}

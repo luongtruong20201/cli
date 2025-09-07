@@ -9,11 +9,10 @@ import (
 
 func ExampleApp() {
 	os.Args = []string{"greet", "--name", "Jeremy"}
-
 	app := cli.NewApp()
 	app.Name = "greet"
 	app.Flags = []cli.Flag{
-		cli.StringFlag{"name", "bob", "a name to say"},
+		cli.StringFlag{Name: "name", Value: "bob", Usage: "a name to say"},
 	}
 	app.Action = func(c *cli.Context) {
 		fmt.Printf("Hello %v\n", c.String("name"))
@@ -31,7 +30,7 @@ func TestApp_Run(t *testing.T) {
 	expect(t, err, nil)
 	err = app.Run([]string{"command", "bar"})
 	expect(t, err, nil)
-
+	expect(t, s, "foobar")
 }
 
 var commandAppTests = []struct {
@@ -65,7 +64,7 @@ func TestApp_CommandWithArgBeforeFlags(t *testing.T) {
 	command := cli.Command{
 		Name: "cmd",
 		Flags: []cli.Flag{
-			cli.StringFlag{"option", "", "some option"},
+			cli.StringFlag{Name: "option", Value: "", Usage: "some option"},
 		},
 		Action: func(c *cli.Context) {
 			parsedOption = c.String("option")
@@ -85,8 +84,8 @@ func TestApp_ParseSliceFlags(t *testing.T) {
 	command := cli.Command{
 		Name: "cmd",
 		Flags: []cli.Flag{
-			cli.IntSliceFlag{"p", &cli.IntSlice{}, "set one or more ip addr"},
-			cli.StringSliceFlag{"ip", &cli.StringSlice{}, "set one or more ports to open"},
+			cli.IntSliceFlag{Name: "p", Value: &cli.IntSlice{}, Usage: "set one or more ip addr"},
+			cli.StringSliceFlag{Name: "ip", Value: &cli.StringSlice{}, Usage: "set one or more ports to open"},
 		},
 		Action: func(c *cli.Context) {
 			parsedIntSlice = c.IntSlice("p")
@@ -123,7 +122,6 @@ func TestApp_ParseSliceFlags(t *testing.T) {
 	if !IntsEquals(parsedIntSlice, expectedIntSlice) {
 		t.Errorf("%v does not match %v", parsedIntSlice, expectedIntSlice)
 	}
-
 	if !StrsEquals(parsedStringSlice, expectedStringSlice) {
 		t.Errorf("%v does not match %v", parsedStringSlice, expectedStringSlice)
 	}

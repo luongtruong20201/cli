@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"time"
 )
 
 type App struct {
@@ -13,14 +14,28 @@ type App struct {
 	Commands []Command
 	Flags    []Flag
 	Action   func(context *Context)
+	Compiled time.Time
+	Author   string
+	Email    string
+}
+
+func compileTime() time.Time {
+	info, err := os.Stat(os.Args[0])
+	if err != nil {
+		return time.Now()
+	}
+	return info.ModTime()
 }
 
 func NewApp() *App {
 	return &App{
-		Name:    os.Args[0],
-		Usage:   "A new cli application",
-		Version: "0.0.0",
-		Action:  helpCommand.Action,
+		Name:     os.Args[0],
+		Usage:    "A new cli application",
+		Version:  "0.0.0",
+		Action:   helpCommand.Action,
+		Compiled: compileTime(),
+		Author:   "Author",
+		Email:    "author@gmail.com",
 	}
 }
 
