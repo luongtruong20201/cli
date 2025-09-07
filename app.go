@@ -44,7 +44,7 @@ func (a *App) Run(arguments []string) error {
 		a.Commands = append(a.Commands, helpCommand)
 	}
 	a.appendFlag(BoolFlag{"version", "print the version"})
-	a.appendFlag(helpFlag{"show help"})
+	a.appendFlag(BoolFlag{"help, h", "show help"})
 	set := flagSet(a.Name, a.Flags)
 	set.SetOutput(ioutil.Discard)
 	err := set.Parse(arguments[1:])

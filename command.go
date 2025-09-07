@@ -17,7 +17,7 @@ type Command struct {
 func (c Command) Run(ctx *Context) error {
 	c.Flags = append(
 		c.Flags,
-		helpFlag{"show help"},
+		BoolFlag{"help, h", "show help"},
 	)
 	set := flagSet(c.Name, c.Flags)
 	set.SetOutput(ioutil.Discard)
