@@ -13,6 +13,7 @@ type App struct {
 	Version  string
 	Commands []Command
 	Flags    []Flag
+	Before   func(context *Context) error
 	Action   func(context *Context)
 	Compiled time.Time
 	Author   string
@@ -68,6 +69,11 @@ func (a *App) Run(arguments []string) error {
 	}
 	if checkVersion(context) {
 		return nil
+	}
+	if a.Before != nil {
+		if err := a.Before(context); err != nil {
+			return err
+		}
 	}
 	args := context.Args()
 	if args.Present() {

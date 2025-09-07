@@ -11,10 +11,11 @@ type Context struct {
 	App       *App
 	flagSet   *flag.FlagSet
 	globalSet *flag.FlagSet
+	setFlags  map[string]bool
 }
 
 func NewContext(app *App, set *flag.FlagSet, globalSet *flag.FlagSet) *Context {
-	return &Context{app, set, globalSet}
+	return &Context{app, set, globalSet, nil}
 }
 
 func (c *Context) Int(name string) int {
@@ -27,6 +28,10 @@ func (c *Context) Float64(name string) float64 {
 
 func (c *Context) Bool(name string) bool {
 	return lookupBool(name, c.flagSet)
+}
+
+func (c *Context) BoolT(name string) bool {
+	return lookupBoolT(name, c.flagSet)
 }
 
 func (c *Context) String(name string) string {
@@ -59,6 +64,16 @@ func (c *Context) GlobalStringSlice(name string) []string {
 
 func (c *Context) GlobalIntSlice(name string) []int {
 	return lookupIntSlice(name, c.globalSet)
+}
+
+func (c *Context) IsSet(name string) bool {
+	if c.setFlags == nil {
+		c.setFlags = make(map[string]bool)
+		c.flagSet.Visit(func(f *flag.Flag) {
+			c.setFlags[f.Name] = true
+		})
+	}
+	return c.setFlags[name]
 }
 
 type Args []string
@@ -155,6 +170,17 @@ func lookupBool(name string, set *flag.FlagSet) bool {
 		return val
 	}
 
+	return false
+}
+
+func lookupBoolT(name string, set *flag.FlagSet) bool {
+	if f := set.Lookup(name); f != nil {
+		val, err := strconv.ParseBool(f.Value.String())
+		if err != nil {
+			return true
+		}
+		return val
+	}
 	return false
 }
 
