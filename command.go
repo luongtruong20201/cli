@@ -29,6 +29,13 @@ func (c Command) Run(ctx *Context) error {
 		fmt.Println("")
 		return err
 	}
+	if err := normalizeFlags(c.Flags, set); err != nil {
+		fmt.Println(err)
+		fmt.Println("")
+		ShowCommandHelp(ctx, c.Name)
+		fmt.Println("")
+		return err
+	}
 	context := NewContext(ctx.App, set, ctx.globalSet)
 	if checkCommandHelp(context, c.Name) {
 		return nil

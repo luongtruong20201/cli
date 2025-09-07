@@ -4,11 +4,13 @@ import (
 	"flag"
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 type Flag interface {
 	fmt.Stringer
 	Apply(*flag.FlagSet)
+	GetName() string
 }
 
 func flagSet(name string, flags []Flag) *flag.FlagSet {
@@ -18,6 +20,14 @@ func flagSet(name string, flags []Flag) *flag.FlagSet {
 		f.Apply(set)
 	}
 	return set
+}
+
+func eachName(longName string, fn func(string)) {
+	parts := strings.Split(longName, ",")
+	for _, name := range parts {
+		name = strings.Trim(name, " ")
+		fn(name)
+	}
 }
 
 type StringSlice []string
@@ -42,11 +52,17 @@ type StringSliceFlag struct {
 }
 
 func (f StringSliceFlag) String() string {
-	return fmt.Sprintf("%s%v '%v'\t%v", prefixFor(f.Name), f.Name, "-"+f.Name+" option -"+f.Name+" option", f.Usage)
+	return fmt.Sprintf("%s '%v'\t%v", prefixFor(f.Name), f.Name, "-"+f.Name+" option -"+f.Name+" option")
 }
 
 func (f StringSliceFlag) Apply(set *flag.FlagSet) {
-	set.Var(f.Value, f.Name, f.Usage)
+	eachName(f.Name, func(name string) {
+		set.Var(f.Value, name, f.Usage)
+	})
+}
+
+func (f StringSliceFlag) GetName() string {
+	return f.Name
 }
 
 type IntSlice []int
@@ -77,11 +93,19 @@ type IntSliceFlag struct {
 }
 
 func (f IntSliceFlag) String() string {
-	return fmt.Sprintf("%s%v '%v'\t%v", prefixFor(f.Name), f.Name, "-"+f.Name+" option -"+f.Name+" option", f.Usage)
+	firstName := strings.Trim(strings.Split(f.Name, ",")[0], " ")
+	pref := prefixFor(firstName)
+	return fmt.Sprintf("%s '%v'\t%v", prefixedNames(f.Name), pref+firstName+" option "+pref+firstName+" option", f.Usage)
 }
 
 func (f IntSliceFlag) Apply(set *flag.FlagSet) {
-	set.Var(f.Value, f.Name, f.Usage)
+	eachName(f.Name, func(name string) {
+		set.Var(f.Value, name, f.Usage)
+	})
+}
+
+func (f IntSliceFlag) GetName() string {
+	return f.Name
 }
 
 type BoolFlag struct {
@@ -90,11 +114,17 @@ type BoolFlag struct {
 }
 
 func (f BoolFlag) String() string {
-	return fmt.Sprintf("%s%v\t%v", prefixFor(f.Name), f.Name, f.Usage)
+	return fmt.Sprintf("%s\t%v", prefixedNames(f.Name), f.Usage)
 }
 
 func (f BoolFlag) Apply(set *flag.FlagSet) {
-	set.Bool(f.Name, false, f.Usage)
+	eachName(f.Name, func(name string) {
+		set.Bool(name, false, f.Usage)
+	})
+}
+
+func (f BoolFlag) GetName() string {
+	return f.Name
 }
 
 type StringFlag struct {
@@ -104,11 +134,17 @@ type StringFlag struct {
 }
 
 func (f StringFlag) String() string {
-	return fmt.Sprintf("%s%v '%v'\t%v", prefixFor(f.Name), f.Name, f.Value, f.Usage)
+	return fmt.Sprintf("%s '%v'\t%v", prefixedNames(f.Name), f.Value, f.Usage)
 }
 
 func (f StringFlag) Apply(set *flag.FlagSet) {
-	set.String(f.Name, f.Value, f.Usage)
+	eachName(f.Name, func(name string) {
+		set.String(name, f.Value, f.Usage)
+	})
+}
+
+func (f StringFlag) GetName() string {
+	return f.Name
 }
 
 type IntFlag struct {
@@ -118,11 +154,17 @@ type IntFlag struct {
 }
 
 func (f IntFlag) String() string {
-	return fmt.Sprintf("%s%v '%v'\t%v", prefixFor(f.Name), f.Name, f.Value, f.Usage)
+	return fmt.Sprintf("%s '%v'\t%v", prefixedNames(f.Name), f.Value, f.Usage)
 }
 
 func (f IntFlag) Apply(set *flag.FlagSet) {
-	set.Int(f.Name, f.Value, f.Usage)
+	eachName(f.Name, func(name string) {
+		set.Int(name, f.Value, f.Usage)
+	})
+}
+
+func (f IntFlag) GetName() string {
+	return f.Name
 }
 
 type helpFlag struct {
@@ -130,12 +172,17 @@ type helpFlag struct {
 }
 
 func (f helpFlag) String() string {
-	return fmt.Sprintf("--help, -h\t%v", f.Usage)
+	return fmt.Sprintf("%s\t%v", prefixedNames("help, h"), f.Usage)
 }
 
 func (f helpFlag) Apply(set *flag.FlagSet) {
-	set.Bool("h", false, f.Usage)
-	set.Bool("help", false, f.Usage)
+	eachName("help, h", func(name string) {
+		set.Bool(name, false, f.Usage)
+	})
+}
+
+func (f helpFlag) GetName() string {
+	return "help"
 }
 
 func prefixFor(name string) (prefix string) {
@@ -143,6 +190,19 @@ func prefixFor(name string) (prefix string) {
 		prefix = "-"
 	} else {
 		prefix = "--"
+	}
+
+	return
+}
+
+func prefixedNames(fullName string) (prefixed string) {
+	parts := strings.Split(fullName, ",")
+	for i, name := range parts {
+		name = strings.Trim(name, " ")
+		prefixed += prefixFor(name) + name
+		if i < len(parts)-1 {
+			prefixed += ", "
+		}
 	}
 	return
 }

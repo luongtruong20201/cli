@@ -48,10 +48,18 @@ func (a *App) Run(arguments []string) error {
 	set := flagSet(a.Name, a.Flags)
 	set.SetOutput(ioutil.Discard)
 	err := set.Parse(arguments[1:])
+	if err := normalizeFlags(a.Flags, set); err != nil {
+		fmt.Println(err)
+		context := NewContext(a, set, set)
+		ShowAppHelp(context)
+		fmt.Println("")
+		return err
+	}
 	context := NewContext(a, set, set)
 
 	if err != nil {
 		fmt.Println("Incorrect Usage.")
+		fmt.Println("")
 		ShowAppHelp(context)
 		fmt.Println("")
 		return err
