@@ -45,6 +45,7 @@ func (a *App) Run(arguments []string) error {
 	if a.Command(helpCommand.Name) == nil {
 		a.Commands = append(a.Commands, helpCommand)
 	}
+	a.appendFlag(BoolFlag{"generate-bash-completion", ""})
 	a.appendFlag(BoolFlag{"version, v", "print the version"})
 	a.appendFlag(BoolFlag{"help, h", "show help"})
 	set := flagSet(a.Name, a.Flags)
@@ -64,6 +65,9 @@ func (a *App) Run(arguments []string) error {
 		ShowAppHelp(context)
 		fmt.Println("")
 		return err
+	}
+	if checkCompletions(context) {
+		return nil
 	}
 	if checkHelp(context) {
 		return nil

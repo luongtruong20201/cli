@@ -7,17 +7,19 @@ import (
 )
 
 type Command struct {
-	Name        string
-	ShortName   string
-	Usage       string
-	Description string
-	Action      func(context *Context)
-	Flags       []Flag
+	Name         string
+	ShortName    string
+	Usage        string
+	Description  string
+	BashComplete func(context *Context)
+	Action       func(context *Context)
+	Flags        []Flag
 }
 
 func (c Command) Run(ctx *Context) error {
 	c.Flags = append(
 		c.Flags,
+		BoolFlag{"generate-bash-completion", ""},
 		BoolFlag{"help, h", "show help"},
 	)
 	set := flagSet(c.Name, c.Flags)
@@ -54,6 +56,9 @@ func (c Command) Run(ctx *Context) error {
 		return nerr
 	}
 	context := NewContext(ctx.App, set, ctx.globalSet)
+	if checkCommandCompletions(context, c.Name) {
+		return nil
+	}
 	if checkCommandHelp(context, c.Name) {
 		return nil
 	}
