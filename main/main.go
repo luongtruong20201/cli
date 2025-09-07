@@ -1,30 +1,39 @@
 package main
 
 import (
-	"cli"
+	"flag"
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 )
 
-func main() {
-	app := cli.NewApp()
-	app.Name = "rm-cli"
-	app.Usage = "A simple CLI application"
-	app.Version = "1.0.0"
-	app.Author = "Your Name"
-	app.Email = "your.email@example.com"
+type IntSlice []int
 
-	command := cli.Command{
-		Name:      "truonglq",
-		ShortName: "tlq",
-		Action: func(c *cli.Context) {
-			fmt.Println("Hello from truonglq command!")
-		},
-		BashComplete: func(c *cli.Context) {
-			fmt.Println("Completion for truonglq command")
-		},
+func (i *IntSlice) String() string {
+	return fmt.Sprint([]int(*i))
+}
+
+func (i *IntSlice) Set(value string) error {
+	vals := strings.Split(value, ",")
+	for _, v := range vals {
+		val, err := strconv.ParseInt(v, 10, 0)
+		if err != nil {
+			return err
+		}
+		*i = append(*i, int(val))
 	}
-	app.Commands = []cli.Command{command}
+	return nil
+}
 
-	app.Run(os.Args)
+func main() {
+	serverFlags := flag.NewFlagSet("server", flag.ExitOnError)
+
+	host := serverFlags.String("host", "localhost", "Server host")
+	port := serverFlags.Int("port", 8080, "Server port")
+
+	serverFlags.Parse(os.Args[1:])
+
+	fmt.Println("Host:", *host)
+	fmt.Println("Port:", *port)
 }

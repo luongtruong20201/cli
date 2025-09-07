@@ -2,9 +2,9 @@ package cli
 
 import (
 	"fmt"
+	"html/template"
 	"os"
 	"text/tabwriter"
-	"text/template"
 )
 
 var AppHelpTemplate = `NAME:

@@ -123,7 +123,6 @@ func lookupInt(name string, set *flag.FlagSet) int {
 		}
 		return val
 	}
-
 	return 0
 }
 
@@ -136,7 +135,6 @@ func lookupFloat64(name string, set *flag.FlagSet) float64 {
 		}
 		return val
 	}
-
 	return 0
 }
 
@@ -145,7 +143,6 @@ func lookupString(name string, set *flag.FlagSet) string {
 	if f != nil {
 		return f.Value.String()
 	}
-
 	return ""
 }
 
@@ -153,9 +150,7 @@ func lookupStringSlice(name string, set *flag.FlagSet) []string {
 	f := set.Lookup(name)
 	if f != nil {
 		return (f.Value.(*StringSlice)).Value()
-
 	}
-
 	return nil
 }
 
@@ -163,15 +158,13 @@ func lookupIntSlice(name string, set *flag.FlagSet) []int {
 	f := set.Lookup(name)
 	if f != nil {
 		return (f.Value.(*IntSlice)).Value()
-
 	}
-
 	return nil
 }
 
 func lookupGeneric(name string, set *flag.FlagSet) interface{} {
 	if f := set.Lookup(name); f != nil {
-		return (f.Value.(Generic)).Value()
+		return f.Value
 	}
 	return nil
 }
@@ -185,7 +178,6 @@ func lookupBool(name string, set *flag.FlagSet) bool {
 		}
 		return val
 	}
-
 	return false
 }
 

@@ -38,7 +38,6 @@ func eachName(longName string, fn func(string)) {
 type Generic interface {
 	Set(string) error
 	String() string
-	Value() interface{}
 }
 
 type GenericFlag struct {
