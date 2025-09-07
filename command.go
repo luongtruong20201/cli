@@ -20,7 +20,6 @@ func (c Command) Run(ctx *Context) {
 		c.Flags,
 		helpFlag{"show help"},
 	)
-
 	set := flagSet(c.Name, c.Flags)
 	set.SetOutput(ioutil.Discard)
 	err := set.Parse(ctx.Args()[1:])
@@ -31,10 +30,8 @@ func (c Command) Run(ctx *Context) {
 		fmt.Println("")
 		os.Exit(1)
 	}
-
 	context := NewContext(ctx.App, set, ctx.globalSet)
 	checkCommandHelp(context, c.Name)
-
 	c.Action(context)
 }
 
