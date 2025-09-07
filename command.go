@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"io/ioutil"
+	"strings"
 )
 
 type Command struct {
@@ -17,21 +18,29 @@ type Command struct {
 func (c Command) Run(ctx *Context) error {
 	c.Flags = append(
 		c.Flags,
-		BoolFlag{"help, h", "show help"},
+		helpFlag{"show help"},
 	)
 	set := flagSet(c.Name, c.Flags)
 	set.SetOutput(ioutil.Discard)
-	err := set.Parse(ctx.Args()[1:])
 
-	if err != nil {
-		fmt.Println("Incorrect Usage.")
-		ShowCommandHelp(ctx, c.Name)
-		fmt.Println("")
-		return err
+	firstFlagIndex := -1
+	for index, arg := range ctx.Args() {
+		if strings.HasPrefix(arg, "-") {
+			firstFlagIndex = index
+			break
+		}
 	}
-	if err := normalizeFlags(c.Flags, set); err != nil {
-		fmt.Println(err)
-		fmt.Println("")
+	var err error
+	if firstFlagIndex > -1 {
+		args := ctx.Args()
+		regularArgs := args[1:firstFlagIndex]
+		flagArgs := args[firstFlagIndex:]
+		err = set.Parse(append(flagArgs, regularArgs...))
+	} else {
+		err = set.Parse(ctx.Args().Tail())
+	}
+	if err != nil {
+		fmt.Printf("Incorrect Usage.\n\n")
 		ShowCommandHelp(ctx, c.Name)
 		fmt.Println("")
 		return err

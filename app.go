@@ -35,7 +35,7 @@ func NewApp() *App {
 		Action:   helpCommand.Action,
 		Compiled: compileTime(),
 		Author:   "Author",
-		Email:    "author@gmail.com",
+		Email:    "unknown@email",
 	}
 }
 
@@ -44,22 +44,13 @@ func (a *App) Run(arguments []string) error {
 		a.Commands = append(a.Commands, helpCommand)
 	}
 	a.appendFlag(BoolFlag{"version", "print the version"})
-	a.appendFlag(BoolFlag{"help, h", "show help"})
+	a.appendFlag(helpFlag{"show help"})
 	set := flagSet(a.Name, a.Flags)
 	set.SetOutput(ioutil.Discard)
 	err := set.Parse(arguments[1:])
-	if err := normalizeFlags(a.Flags, set); err != nil {
-		fmt.Println(err)
-		context := NewContext(a, set, set)
-		ShowAppHelp(context)
-		fmt.Println("")
-		return err
-	}
 	context := NewContext(a, set, set)
-
 	if err != nil {
-		fmt.Println("Incorrect Usage.")
-		fmt.Println("")
+		fmt.Printf("Incorrect Usage.\n\n")
 		ShowAppHelp(context)
 		fmt.Println("")
 		return err
@@ -71,8 +62,8 @@ func (a *App) Run(arguments []string) error {
 		return nil
 	}
 	args := context.Args()
-	if len(args) > 0 {
-		name := args[0]
+	if args.Present() {
+		name := args.First()
 		c := a.Command(name)
 		if c != nil {
 			return c.Run(context)

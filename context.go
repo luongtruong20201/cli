@@ -1,10 +1,8 @@
 package cli
 
 import (
-	"errors"
 	"flag"
 	"strconv"
-	"strings"
 )
 
 type Context struct {
@@ -13,56 +11,60 @@ type Context struct {
 	globalSet *flag.FlagSet
 }
 
+type Args []string
+
 func NewContext(app *App, set *flag.FlagSet, globalSet *flag.FlagSet) *Context {
 	return &Context{app, set, globalSet}
 }
 
 func (c *Context) Int(name string) int {
-	return lookupInt(name, c.flagSet)
+	return c.lookupInt(name, c.flagSet)
 }
 
 func (c *Context) Bool(name string) bool {
-	return lookupBool(name, c.flagSet)
+	return c.lookupBool(name, c.flagSet)
 }
 
 func (c *Context) String(name string) string {
-	return lookupString(name, c.flagSet)
+	return c.lookupString(name, c.flagSet)
 }
 
 func (c *Context) StringSlice(name string) []string {
-	return lookupStringSlice(name, c.flagSet)
+	return c.lookupStringSlice(name, c.flagSet)
 }
 
 func (c *Context) IntSlice(name string) []int {
-	return lookupIntSlice(name, c.flagSet)
+	return c.lookupIntSlice(name, c.flagSet)
 }
 
 func (c *Context) GlobalInt(name string) int {
-	return lookupInt(name, c.globalSet)
+	return c.lookupInt(name, c.globalSet)
 }
 
 func (c *Context) GlobalBool(name string) bool {
-	return lookupBool(name, c.globalSet)
+	return c.lookupBool(name, c.globalSet)
 }
 
 func (c *Context) GlobalString(name string) string {
-	return lookupString(name, c.globalSet)
+	return c.lookupString(name, c.globalSet)
 }
 
 func (c *Context) GlobalStringSlice(name string) []string {
-	return lookupStringSlice(name, c.globalSet)
+	return c.lookupStringSlice(name, c.globalSet)
 }
 
 func (c *Context) GlobalIntSlice(name string) []int {
-	return lookupIntSlice(name, c.globalSet)
+	return c.lookupIntSlice(name, c.globalSet)
 }
 
-func (c *Context) Args() []string {
-	return c.flagSet.Args()
+func (c *Context) Args() Args {
+	args := Args(c.flagSet.Args())
+	return args
 }
 
-func lookupInt(name string, set *flag.FlagSet) int {
-	if f := set.Lookup(name); f != nil {
+func (c *Context) lookupInt(name string, set *flag.FlagSet) int {
+	f := set.Lookup(name)
+	if f != nil {
 		val, err := strconv.Atoi(f.Value.String())
 		if err != nil {
 			return 0
@@ -72,30 +74,34 @@ func lookupInt(name string, set *flag.FlagSet) int {
 	return 0
 }
 
-func lookupString(name string, set *flag.FlagSet) string {
-	if f := set.Lookup(name); f != nil {
+func (c *Context) lookupString(name string, set *flag.FlagSet) string {
+	f := set.Lookup(name)
+	if f != nil {
 		return f.Value.String()
 	}
 	return ""
 }
 
-func lookupStringSlice(name string, set *flag.FlagSet) []string {
-	if f := set.Lookup(name); f != nil {
+func (c *Context) lookupStringSlice(name string, set *flag.FlagSet) []string {
+	f := set.Lookup(name)
+	if f != nil {
 		return (f.Value.(*StringSlice)).Value()
 
 	}
 	return nil
 }
 
-func lookupIntSlice(name string, set *flag.FlagSet) []int {
-	if f := set.Lookup(name); f != nil {
+func (c *Context) lookupIntSlice(name string, set *flag.FlagSet) []int {
+	f := set.Lookup(name)
+	if f != nil {
 		return (f.Value.(*IntSlice)).Value()
 	}
 	return nil
 }
 
-func lookupBool(name string, set *flag.FlagSet) bool {
-	if f := set.Lookup(name); f != nil {
+func (c *Context) lookupBool(name string, set *flag.FlagSet) bool {
+	f := set.Lookup(name)
+	if f != nil {
 		val, err := strconv.ParseBool(f.Value.String())
 		if err != nil {
 			return false
@@ -105,45 +111,24 @@ func lookupBool(name string, set *flag.FlagSet) bool {
 	return false
 }
 
-func (c *Context) GetArg(n int) string {
-	args := c.Args()
-	if len(args) < n {
-		return args[n]
+func (a Args) Get(n int) string {
+	if len(a) > n {
+		return a[n]
 	}
 	return ""
 }
 
-func (c *Context) FirstArg() string {
-	return c.GetArg(0)
+func (a Args) First() string {
+	return a.Get(0)
 }
 
-func normalizeFlags(flags []Flag, set *flag.FlagSet) error {
-	visited := make(map[string]bool)
-	set.Visit(func(f *flag.Flag) {
-		visited[f.Name] = true
-	})
-	for _, f := range flags {
-		parts := strings.Split(f.getName(), ",")
-		if len(parts) == 1 {
-			continue
-		}
-		var ff *flag.Flag
-		for _, name := range parts {
-			name := strings.Trim(name, " ")
-			if visited[name] {
-				if ff != nil {
-					return errors.New("cannot use two forms of the same flag: " + name + " " + ff.Name)
-				}
-				ff = set.Lookup(name)
-			}
-		}
-		if ff == nil {
-			continue
-		}
-		for _, name := range parts {
-			name = strings.Trim(name, " ")
-			set.Set(name, ff.Value.String())
-		}
+func (a Args) Tail() []string {
+	if len(a) >= 2 {
+		return []string(a)[1:]
 	}
-	return nil
+	return []string{}
+}
+
+func (a Args) Present() bool {
+	return len(a) != 0
 }
