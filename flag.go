@@ -98,7 +98,6 @@ func (f StringSliceFlag) getName() string {
 type IntSlice []int
 
 func (f *IntSlice) Set(value string) error {
-
 	tmp, err := strconv.Atoi(value)
 	if err != nil {
 		return err
