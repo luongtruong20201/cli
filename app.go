@@ -51,8 +51,8 @@ func (a *App) Run(arguments []string) error {
 	if a.EnableBashCompletion {
 		a.appendFlag(BashCompletionFlag)
 	}
-	a.appendFlag(BoolFlag{"version, v", "print the version"})
-	a.appendFlag(BoolFlag{"help, h", "show help"})
+	a.appendFlag(VersionFlag)
+	a.appendFlag(HelpFlag)
 	set := flagSet(a.Name, a.Flags)
 	set.SetOutput(ioutil.Discard)
 	err := set.Parse(arguments[1:])
@@ -81,7 +81,8 @@ func (a *App) Run(arguments []string) error {
 		return nil
 	}
 	if a.Before != nil {
-		if err := a.Before(context); err != nil {
+		err := a.Before(context)
+		if err != nil {
 			return err
 		}
 	}
@@ -94,6 +95,70 @@ func (a *App) Run(arguments []string) error {
 		}
 	}
 	a.Action(context)
+	return nil
+}
+
+func (a *App) RunAsSubcommand(ctx *Context) error {
+	if len(a.Commands) > 0 {
+		if a.Command(helpCommand.Name) == nil {
+			a.Commands = append(a.Commands, helpCommand)
+		}
+	}
+	if a.EnableBashCompletion {
+		a.appendFlag(BashCompletionFlag)
+	}
+	a.appendFlag(HelpFlag)
+	set := flagSet(a.Name, a.Flags)
+	set.SetOutput(ioutil.Discard)
+	err := set.Parse(ctx.Args().Tail())
+	nerr := normalizeFlags(a.Flags, set)
+	context := NewContext(a, set, ctx.globalSet)
+	if nerr != nil {
+		fmt.Println(nerr)
+		if len(a.Commands) > 0 {
+			ShowSubcommandHelp(context)
+		} else {
+			ShowCommandHelp(ctx, context.Args().First())
+		}
+		fmt.Println("")
+		return nerr
+	}
+	if err != nil {
+		fmt.Printf("Incorrect Usage.\n\n")
+		ShowSubcommandHelp(context)
+		return err
+	}
+	if checkCompletions(context) {
+		return nil
+	}
+	if len(a.Commands) > 0 {
+		if checkSubcommandHelp(context) {
+			return nil
+		}
+	} else {
+		if checkCommandHelp(ctx, context.Args().First()) {
+			return nil
+		}
+	}
+	if a.Before != nil {
+		err := a.Before(context)
+		if err != nil {
+			return err
+		}
+	}
+	args := context.Args()
+	if args.Present() {
+		name := args.First()
+		c := a.Command(name)
+		if c != nil {
+			return c.Run(context)
+		}
+	}
+	if len(a.Commands) > 0 {
+		a.Action(context)
+	} else {
+		a.Action(ctx)
+	}
 	return nil
 }
 

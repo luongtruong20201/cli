@@ -75,6 +75,10 @@ func (c *Context) GlobalIntSlice(name string) []int {
 	return lookupIntSlice(name, c.globalSet)
 }
 
+func (c *Context) GlobalGeneric(name string) interface{} {
+	return lookupGeneric(name, c.globalSet)
+}
+
 func (c *Context) IsSet(name string) bool {
 	if c.setFlags == nil {
 		c.setFlags = make(map[string]bool)
@@ -82,7 +86,7 @@ func (c *Context) IsSet(name string) bool {
 			c.setFlags[f.Name] = true
 		})
 	}
-	return c.setFlags[name]
+	return c.setFlags[name] == true
 }
 
 type Args []string
@@ -163,7 +167,8 @@ func lookupIntSlice(name string, set *flag.FlagSet) []int {
 }
 
 func lookupGeneric(name string, set *flag.FlagSet) interface{} {
-	if f := set.Lookup(name); f != nil {
+	f := set.Lookup(name)
+	if f != nil {
 		return f.Value
 	}
 	return nil
@@ -182,7 +187,8 @@ func lookupBool(name string, set *flag.FlagSet) bool {
 }
 
 func lookupBoolT(name string, set *flag.FlagSet) bool {
-	if f := set.Lookup(name); f != nil {
+	f := set.Lookup(name)
+	if f != nil {
 		val, err := strconv.ParseBool(f.Value.String())
 		if err != nil {
 			return true

@@ -7,10 +7,11 @@ import (
 	"strings"
 )
 
-var BashCompletionFlag = BoolFlag{
-	Name:  "generate-bash-completion",
-	Usage: "",
-}
+var (
+	BashCompletionFlag = BoolFlag{"generate-bash-completion", ""}
+	VersionFlag        = BoolFlag{"version, v", "print the version"}
+	HelpFlag           = BoolFlag{"help, h", "show help"}
+)
 
 type Flag interface {
 	fmt.Stringer
@@ -36,7 +37,7 @@ func eachName(longName string, fn func(string)) {
 }
 
 type Generic interface {
-	Set(string) error
+	Set(value string) error
 	String() string
 }
 
@@ -82,7 +83,9 @@ type StringSliceFlag struct {
 }
 
 func (f StringSliceFlag) String() string {
-	return fmt.Sprintf("%s%s %v\t`%v` %s", prefixFor(f.Name), f.Name, f.Value, "-"+f.Name+" option -"+f.Name+" option", f.Usage)
+	firstName := strings.Trim(strings.Split(f.Name, ",")[0], " ")
+	pref := prefixFor(firstName)
+	return fmt.Sprintf("%s '%v'\t%v", prefixedNames(f.Name), pref+firstName+" option "+pref+firstName+" option", f.Usage)
 }
 
 func (f StringSliceFlag) Apply(set *flag.FlagSet) {
@@ -248,7 +251,6 @@ func prefixFor(name string) (prefix string) {
 	} else {
 		prefix = "--"
 	}
-
 	return
 }
 

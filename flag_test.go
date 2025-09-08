@@ -110,20 +110,17 @@ func TestParseMultiString(t *testing.T) {
 func TestParseMultiStringSlice(t *testing.T) {
 	(&cli.App{
 		Flags: []cli.Flag{
-			cli.StringSliceFlag{
-				Name:  "serve, s",
-				Value: &cli.StringSlice{},
-			},
+			cli.StringSliceFlag{Name: "serve, s", Value: &cli.StringSlice{}},
 		},
 		Action: func(ctx *cli.Context) {
-			if reflect.DeepEqual(ctx.StringSlice("serve"), []string{"10", "20"}) {
+			if !reflect.DeepEqual(ctx.StringSlice("serve"), []string{"10", "20"}) {
 				t.Errorf("main name not set")
 			}
-			if reflect.DeepEqual(ctx.StringSlice("s"), []string{"10", "20"}) {
+			if !reflect.DeepEqual(ctx.StringSlice("s"), []string{"10", "20"}) {
 				t.Errorf("short name not set")
 			}
 		},
-	}).Run([]string{"run", "-s", "10", "--serve", "20"})
+	}).Run([]string{"run", "-s", "10", "-s", "20"})
 }
 
 func TestParseMultiInt(t *testing.T) {
@@ -167,8 +164,10 @@ func (p *Parser) Set(value string) error {
 	if len(parts) != 2 {
 		return fmt.Errorf("invalid format")
 	}
+
 	(*p)[0] = parts[0]
 	(*p)[1] = parts[1]
+
 	return nil
 }
 

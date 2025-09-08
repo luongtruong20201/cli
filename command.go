@@ -12,15 +12,20 @@ type Command struct {
 	Usage           string
 	Description     string
 	BashComplete    func(context *Context)
+	Before          func(context *Context) error
 	Action          func(context *Context)
+	Subcommands     []Command
 	Flags           []Flag
 	SkipFlagParsing bool
 }
 
 func (c Command) Run(ctx *Context) error {
+	if len(c.Subcommands) > 0 || c.Before != nil {
+		return c.startApp(ctx)
+	}
 	c.Flags = append(
 		c.Flags,
-		BoolFlag{"help, h", "show help"},
+		HelpFlag,
 	)
 	if ctx.App.EnableBashCompletion {
 		c.Flags = append(c.Flags, BashCompletionFlag)
@@ -72,4 +77,27 @@ func (c Command) Run(ctx *Context) error {
 
 func (c Command) HasName(name string) bool {
 	return c.Name == name || c.ShortName == name
+}
+
+func (c Command) startApp(ctx *Context) error {
+	app := NewApp()
+	app.Name = fmt.Sprintf("%s %s", ctx.App.Name, c.Name)
+	if c.Description != "" {
+		app.Usage = c.Description
+	} else {
+		app.Usage = c.Usage
+	}
+	app.Commands = c.Subcommands
+	app.Flags = c.Flags
+	app.EnableBashCompletion = ctx.App.EnableBashCompletion
+	if c.BashComplete != nil {
+		app.BashComplete = c.BashComplete
+	}
+	app.Before = c.Before
+	if c.Action != nil {
+		app.Action = c.Action
+	} else {
+		app.Action = helpSubcommand.Action
+	}
+	return app.RunAsSubcommand(ctx)
 }

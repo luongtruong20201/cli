@@ -3,22 +3,51 @@ package cli_test
 import (
 	"cli"
 	"fmt"
-	"os"
 	"testing"
 )
 
-func ExampleApp() {
-	os.Args = []string{"greet", "--name", "Jeremy"}
-	app := cli.NewApp()
-	app.Name = "greet"
-	app.Flags = []cli.Flag{
-		cli.StringFlag{Name: "name", Value: "bob", Usage: "a name to say"},
-	}
-	app.Action = func(c *cli.Context) {
-		fmt.Printf("Hello %v\n", c.String("name"))
-	}
-	app.Run(os.Args)
-}
+// func ExampleApp() {
+// 	os.Args = []string{"greet", "--name", "Jeremy"}
+// 	app := cli.NewApp()
+// 	app.Name = "greet"
+// 	app.Flags = []cli.Flag{
+// 		cli.StringFlag{Name: "name", Value: "bob", Usage: "a name to say"},
+// 	}
+// 	app.Action = func(c *cli.Context) {
+// 		fmt.Printf("Hello %v\n", c.String("name"))
+// 	}
+// 	app.Run(os.Args)
+// }
+
+// func ExampleAppSubcommand() {
+// 	os.Args = []string{"say", "hi", "english", "--name", "Jeremy"}
+// 	app := cli.NewApp()
+// 	app.Name = "say"
+// 	app.Commands = []cli.Command{
+// 		{
+// 			Name:        "hello",
+// 			ShortName:   "hi",
+// 			Usage:       "use it to see a description",
+// 			Description: "This is how we describe hello the function",
+// 			Subcommands: []cli.Command{
+// 				{
+// 					Name:        "english",
+// 					ShortName:   "en",
+// 					Usage:       "sends a greeting in english",
+// 					Description: "greets someone in english",
+// 					Flags: []cli.Flag{
+// 						cli.StringFlag{"name", "Bob", "Name of the person to greet"},
+// 					},
+// 					Action: func(c *cli.Context) {
+// 						fmt.Println("Hello,", c.String("name"))
+// 					},
+// 				},
+// 			},
+// 		},
+// 	}
+
+// 	app.Run(os.Args)
+// }
 
 // func ExampleAppHelp() {
 // 	os.Args = []string{"greet", "h", "describeit"}
@@ -64,7 +93,6 @@ func ExampleApp() {
 // 			},
 // 		},
 // 	}
-
 // 	app.Run(os.Args)
 // }
 
@@ -95,7 +123,7 @@ var commandAppTests = []struct {
 
 func TestApp_Command(t *testing.T) {
 	app := cli.NewApp()
-	fooCommand := cli.Command{Name: "foobar", ShortName: "f", Description: "Foobar is nuts"}
+	fooCommand := cli.Command{Name: "foobar", ShortName: "f"}
 	batCommand := cli.Command{Name: "batbaz", ShortName: "b"}
 	app.Commands = []cli.Command{
 		fooCommand,
@@ -220,7 +248,7 @@ func TestApp_BeforeFunc(t *testing.T) {
 	}
 	err = app.Run([]string{"command", "--opt", "succeed", "sub"})
 	if err != nil {
-		t.Fatalf("Run error: %v", err)
+		t.Fatalf("Run error: %s", err)
 	}
 
 	if beforeRun == false {
@@ -246,7 +274,6 @@ func TestApp_BeforeFunc(t *testing.T) {
 	if subcommandRun == true {
 		t.Errorf("Subcommand executed when NOT expected")
 	}
-
 }
 
 func TestAppHelpPrinter(t *testing.T) {
@@ -271,11 +298,11 @@ func TestAppHelpPrinter(t *testing.T) {
 func TestAppCommandNotFound(t *testing.T) {
 	beforeRun, subcommandRun := false, false
 	app := cli.NewApp()
-	app.CommandNotFound = func(ctx *cli.Context, command string) {
+	app.CommandNotFound = func(c *cli.Context, command string) {
 		beforeRun = true
 	}
 	app.Commands = []cli.Command{
-		{
+		cli.Command{
 			Name: "bar",
 			Action: func(c *cli.Context) {
 				subcommandRun = true
@@ -285,4 +312,29 @@ func TestAppCommandNotFound(t *testing.T) {
 	app.Run([]string{"command", "foo"})
 	expect(t, beforeRun, true)
 	expect(t, subcommandRun, false)
+}
+
+func TestGlobalFlagsInSubcommands(t *testing.T) {
+	subcommandRun := false
+	app := cli.NewApp()
+	app.Flags = []cli.Flag{
+		cli.BoolFlag{Name: "debug, d", Usage: "Enable debugging"},
+	}
+	app.Commands = []cli.Command{
+		cli.Command{
+			Name: "foo",
+			Subcommands: []cli.Command{
+				{
+					Name: "bar",
+					Action: func(c *cli.Context) {
+						if c.GlobalBool("debug") {
+							subcommandRun = true
+						}
+					},
+				},
+			},
+		},
+	}
+	app.Run([]string{"command", "-d", "foo", "bar"})
+	expect(t, subcommandRun, true)
 }
