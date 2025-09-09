@@ -14,7 +14,11 @@ USAGE:
    {{.Name}} {{ if .Flags }}[global options] {{ end }}command{{ if .Flags }} [command options]{{ end }} [arguments...]
 
 VERSION:
-   {{.Version}}
+   {{.Version}}{{if or .Author .Email}}
+
+AUTHOR:{{if .Author}}
+  {{.Author}}{{if .Email}} - <{{.Email}}>{{end}}{{else}}
+  {{.Email}}{{end}}{{end}}
 
 COMMANDS:
    {{range .Commands}}{{.Name}}{{with .ShortName}}, {{.}}{{end}}{{ "\t" }}{{.Usage}}
@@ -42,7 +46,7 @@ var SubcommandHelpTemplate = `NAME:
    {{.Name}} - {{.Usage}}
 
 USAGE:
-   {{.Name}} [global options] command{{ if .Flags }} [command options]{{ end }} [arguments...]
+   {{.Name}} command{{ if .Flags }} [command options]{{ end }} [arguments...]
 
 COMMANDS:
    {{range .Commands}}{{.Name}}{{with .ShortName}}, {{.}}{{end}}{{ "\t" }}{{.Usage}}
