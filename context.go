@@ -9,11 +9,12 @@ import (
 )
 
 type Context struct {
-	App       *App
-	Command   Command
-	flagSet   *flag.FlagSet
-	globalSet *flag.FlagSet
-	setFlags  map[string]bool
+	App            *App
+	Command        Command
+	flagSet        *flag.FlagSet
+	globalSet      *flag.FlagSet
+	setFlags       map[string]bool
+	globalSetFlags map[string]bool
 }
 
 func NewContext(app *App, set *flag.FlagSet, globalSet *flag.FlagSet) *Context {
@@ -95,7 +96,29 @@ func (c *Context) IsSet(name string) bool {
 			c.setFlags[f.Name] = true
 		})
 	}
-	return c.setFlags[name] == true
+	return c.setFlags[name]
+}
+
+func (c *Context) GlobalIsSet(name string) bool {
+	if c.globalSetFlags == nil {
+		c.globalSetFlags = make(map[string]bool)
+		c.globalSet.Visit(func(f *flag.Flag) {
+			c.globalSetFlags[f.Name] = true
+		})
+	}
+	return c.globalSetFlags[name]
+}
+
+func (c *Context) GlobalFlagNames() (names []string) {
+	for _, flag := range c.App.Flags {
+		name := strings.Split(flag.getName(), ",")[0]
+		if name == "help" || name == "version" {
+			continue
+
+		}
+		names = append(names, name)
+	}
+	return
 }
 
 type Args []string

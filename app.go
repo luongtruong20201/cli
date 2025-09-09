@@ -15,9 +15,11 @@ type App struct {
 	Flags                []Flag
 	EnableBashCompletion bool
 	HideHelp             bool
+	HideVersion          bool
 	BashComplete         func(context *Context)
 	Before               func(context *Context) error
-	Action               func(context *Context) error
+	After                func(context *Context) error
+	Action               func(context *Context)
 	CommandNotFound      func(context *Context, command string)
 	Compiled             time.Time
 	Author               string
@@ -43,7 +45,7 @@ func NewApp() *App {
 	}
 }
 
-func (a *App) Run(arguments []string) error {
+func (a *App) Run(arguments []string) (err error) {
 	if a.Command(helpCommand.Name) == nil && !a.HideHelp {
 		a.Commands = append(a.Commands, helpCommand)
 		a.appendFlag(HelpFlag)
@@ -51,10 +53,12 @@ func (a *App) Run(arguments []string) error {
 	if a.EnableBashCompletion {
 		a.appendFlag(BashCompletionFlag)
 	}
-	a.appendFlag(VersionFlag)
+	if !a.HideVersion {
+		a.appendFlag(VersionFlag)
+	}
 	set := flagSet(a.Name, a.Flags)
 	set.SetOutput(ioutil.Discard)
-	err := set.Parse(arguments[1:])
+	err = set.Parse(arguments[1:])
 	nerr := normalizeFlags(a.Flags, set)
 	if nerr != nil {
 		fmt.Println(nerr)
@@ -79,6 +83,14 @@ func (a *App) Run(arguments []string) error {
 	if checkVersion(context) {
 		return nil
 	}
+	if a.After != nil {
+		defer func() {
+			aferr := a.After(context)
+			if err == nil {
+				err = aferr
+			}
+		}()
+	}
 	if a.Before != nil {
 		err := a.Before(context)
 		if err != nil {
@@ -93,7 +105,8 @@ func (a *App) Run(arguments []string) error {
 			return c.Run(context)
 		}
 	}
-	return a.Action(context)
+	a.Action(context)
+	return nil
 }
 
 func (a *App) RunAndExitOnError() {
@@ -103,7 +116,7 @@ func (a *App) RunAndExitOnError() {
 	}
 }
 
-func (a *App) RunAsSubcommand(ctx *Context) error {
+func (a *App) RunAsSubcommand(ctx *Context) (err error) {
 	if len(a.Commands) > 0 {
 		if a.Command(helpCommand.Name) == nil && !a.HideHelp {
 			a.Commands = append(a.Commands, helpCommand)
@@ -115,7 +128,7 @@ func (a *App) RunAsSubcommand(ctx *Context) error {
 	}
 	set := flagSet(a.Name, a.Flags)
 	set.SetOutput(ioutil.Discard)
-	err := set.Parse(ctx.Args().Tail())
+	err = set.Parse(ctx.Args().Tail())
 	nerr := normalizeFlags(a.Flags, set)
 	context := NewContext(a, set, ctx.globalSet)
 	if nerr != nil {
@@ -145,6 +158,15 @@ func (a *App) RunAsSubcommand(ctx *Context) error {
 			return nil
 		}
 	}
+	if a.After != nil {
+		defer func() {
+			aferr := a.After(context)
+			if err == nil {
+				err = aferr
+			}
+		}()
+	}
+
 	if a.Before != nil {
 		err := a.Before(context)
 		if err != nil {

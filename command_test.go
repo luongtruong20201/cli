@@ -17,8 +17,7 @@ func TestCommandDoNotIgnoreFlags(t *testing.T) {
 		ShortName:   "tc",
 		Usage:       "this is for testing",
 		Description: "testing",
-		Action: func(_ *cli.Context) error {
-			return nil
+		Action: func(_ *cli.Context) {
 		},
 	}
 	err := command.Run(c)
@@ -36,8 +35,7 @@ func TestCommandIgnoreFlags(t *testing.T) {
 		ShortName:   "tc",
 		Usage:       "this is for testing",
 		Description: "testing",
-		Action: func(_ *cli.Context) error {
-			return nil
+		Action: func(_ *cli.Context) {
 		},
 		SkipFlagParsing: true,
 	}

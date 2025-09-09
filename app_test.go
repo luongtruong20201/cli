@@ -7,7 +7,9 @@ import (
 )
 
 // func ExampleApp() {
+// 	// set args for examples sake
 // 	os.Args = []string{"greet", "--name", "Jeremy"}
+
 // 	app := cli.NewApp()
 // 	app.Name = "greet"
 // 	app.Flags = []cli.Flag{
@@ -17,6 +19,8 @@ import (
 // 		fmt.Printf("Hello %v\n", c.String("name"))
 // 	}
 // 	app.Run(os.Args)
+// 	// Output:
+// 	// Hello Jeremy
 // }
 
 // func ExampleAppSubcommand() {
@@ -52,13 +56,14 @@ import (
 // 	}
 
 // 	app.Run(os.Args)
-// }
-
-// 	app.Run(os.Args)
+// 	// Output:
+// 	// Hello, Jeremy
 // }
 
 // func ExampleAppHelp() {
+// 	// set args for examples sake
 // 	os.Args = []string{"greet", "h", "describeit"}
+
 // 	app := cli.NewApp()
 // 	app.Name = "greet"
 // 	app.Flags = []cli.Flag{
@@ -76,10 +81,21 @@ import (
 // 		},
 // 	}
 // 	app.Run(os.Args)
+// 	// Output:
+// 	// NAME:
+// 	//    describeit - use it to see a description
+// 	//
+// 	// USAGE:
+// 	//    command describeit [arguments...]
+// 	//
+// 	// DESCRIPTION:
+// 	//    This is how we describe describeit the function
 // }
 
 // func ExampleAppBashComplete() {
+// 	// set args for examples sake
 // 	os.Args = []string{"greet", "--generate-bash-completion"}
+
 // 	app := cli.NewApp()
 // 	app.Name = "greet"
 // 	app.EnableBashCompletion = true
@@ -101,15 +117,21 @@ import (
 // 			},
 // 		},
 // 	}
+
 // 	app.Run(os.Args)
+// 	// Output:
+// 	// describeit
+// 	// d
+// 	// next
+// 	// help
+// 	// h
 // }
 
 func TestApp_Run(t *testing.T) {
 	s := ""
 	app := cli.NewApp()
-	app.Action = func(c *cli.Context) error {
+	app.Action = func(c *cli.Context) {
 		s = s + c.Args().First()
-		return nil
 	}
 	err := app.Run([]string{"command", "foo"})
 	expect(t, err, nil)
@@ -151,10 +173,9 @@ func TestApp_CommandWithArgBeforeFlags(t *testing.T) {
 		Flags: []cli.Flag{
 			cli.StringFlag{Name: "option", Value: "", Usage: "some option"},
 		},
-		Action: func(c *cli.Context) error {
+		Action: func(c *cli.Context) {
 			parsedOption = c.String("option")
 			firstArg = c.Args().First()
-			return nil
 		},
 	}
 	app.Commands = []cli.Command{command}
@@ -169,9 +190,8 @@ func TestApp_Float64Flag(t *testing.T) {
 	app.Flags = []cli.Flag{
 		cli.Float64Flag{Name: "height", Value: 1.5, Usage: "Set the height, in meters"},
 	}
-	app.Action = func(c *cli.Context) error {
+	app.Action = func(c *cli.Context) {
 		meters = c.Float64("height")
-		return nil
 	}
 	app.Run([]string{"", "--height", "1.93"})
 	expect(t, meters, 1.93)
@@ -180,7 +200,6 @@ func TestApp_Float64Flag(t *testing.T) {
 func TestApp_ParseSliceFlags(t *testing.T) {
 	var parsedIntSlice []int
 	var parsedStringSlice []string
-
 	app := cli.NewApp()
 	command := cli.Command{
 		Name: "cmd",
@@ -188,10 +207,9 @@ func TestApp_ParseSliceFlags(t *testing.T) {
 			cli.IntSliceFlag{Name: "p", Value: &cli.IntSlice{}, Usage: "set one or more ip addr"},
 			cli.StringSliceFlag{Name: "ip", Value: &cli.StringSlice{}, Usage: "set one or more ports to open"},
 		},
-		Action: func(c *cli.Context) error {
+		Action: func(c *cli.Context) {
 			parsedIntSlice = c.IntSlice("p")
 			parsedStringSlice = c.StringSlice("ip")
-			return nil
 		},
 	}
 	app.Commands = []cli.Command{command}
@@ -233,9 +251,7 @@ func TestApp_BeforeFunc(t *testing.T) {
 	beforeRun, subcommandRun := false, false
 	beforeError := fmt.Errorf("fail")
 	var err error
-
 	app := cli.NewApp()
-
 	app.Before = func(c *cli.Context) error {
 		beforeRun = true
 		s := c.String("opt")
@@ -245,17 +261,14 @@ func TestApp_BeforeFunc(t *testing.T) {
 
 		return nil
 	}
-
 	app.Commands = []cli.Command{
 		cli.Command{
 			Name: "sub",
-			Action: func(c *cli.Context) error {
+			Action: func(c *cli.Context) {
 				subcommandRun = true
-				return nil
 			},
 		},
 	}
-
 	app.Flags = []cli.Flag{
 		cli.StringFlag{Name: "opt"},
 	}
@@ -271,11 +284,8 @@ func TestApp_BeforeFunc(t *testing.T) {
 	if subcommandRun == false {
 		t.Errorf("Subcommand not executed when expected")
 	}
-
 	beforeRun, subcommandRun = false, false
-
 	err = app.Run([]string{"command", "--opt", "fail", "sub"})
-
 	if err != beforeError {
 		t.Errorf("Run error expected, but not received")
 	}
@@ -289,22 +299,83 @@ func TestApp_BeforeFunc(t *testing.T) {
 	}
 }
 
+func TestApp_AfterFunc(t *testing.T) {
+	afterRun, subcommandRun := false, false
+	afterError := fmt.Errorf("fail")
+	var err error
+	app := cli.NewApp()
+	app.After = func(c *cli.Context) error {
+		afterRun = true
+		s := c.String("opt")
+		if s == "fail" {
+			return afterError
+		}
+		return nil
+	}
+	app.Commands = []cli.Command{
+		cli.Command{
+			Name: "sub",
+			Action: func(c *cli.Context) {
+				subcommandRun = true
+			},
+		},
+	}
+	app.Flags = []cli.Flag{
+		cli.StringFlag{Name: "opt"},
+	}
+	err = app.Run([]string{"command", "--opt", "succeed", "sub"})
+	if err != nil {
+		t.Fatalf("Run error: %s", err)
+	}
+	if afterRun == false {
+		t.Errorf("After() not executed when expected")
+	}
+	if subcommandRun == false {
+		t.Errorf("Subcommand not executed when expected")
+	}
+	afterRun, subcommandRun = false, false
+	err = app.Run([]string{"command", "--opt", "fail", "sub"})
+	if err != afterError {
+		t.Errorf("Run error expected, but not received")
+	}
+	if afterRun == false {
+		t.Errorf("After() not executed when expected")
+	}
+	if subcommandRun == false {
+		t.Errorf("Subcommand not executed when expected")
+	}
+}
+
 func TestAppHelpPrinter(t *testing.T) {
 	oldPrinter := cli.HelpPrinter
 	defer func() {
 		cli.HelpPrinter = oldPrinter
 	}()
-
 	var wasCalled = false
 	cli.HelpPrinter = func(template string, data interface{}) {
 		wasCalled = true
 	}
-
 	app := cli.NewApp()
 	app.Run([]string{"-h"})
-
 	if wasCalled == false {
 		t.Errorf("Help printer expected to be called, but was not")
+	}
+}
+
+func TestAppVersionPrinter(t *testing.T) {
+	oldPrinter := cli.VersionPrinter
+	defer func() {
+		cli.VersionPrinter = oldPrinter
+	}()
+	var wasCalled = false
+	cli.VersionPrinter = func(c *cli.Context) {
+		wasCalled = true
+	}
+	app := cli.NewApp()
+	ctx := cli.NewContext(app, nil, nil)
+	cli.ShowVersion(ctx)
+	if wasCalled == false {
+		t.Errorf("Version printer expected to be called, but was not")
 	}
 }
 
@@ -317,9 +388,8 @@ func TestAppCommandNotFound(t *testing.T) {
 	app.Commands = []cli.Command{
 		cli.Command{
 			Name: "bar",
-			Action: func(c *cli.Context) error {
+			Action: func(c *cli.Context) {
 				subcommandRun = true
-				return nil
 			},
 		},
 	}
@@ -340,11 +410,10 @@ func TestGlobalFlagsInSubcommands(t *testing.T) {
 			Subcommands: []cli.Command{
 				{
 					Name: "bar",
-					Action: func(c *cli.Context) error {
+					Action: func(c *cli.Context) {
 						if c.GlobalBool("debug") {
 							subcommandRun = true
 						}
-						return nil
 					},
 				},
 			},

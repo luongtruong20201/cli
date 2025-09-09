@@ -14,7 +14,11 @@ USAGE:
    {{.Name}} {{if .Flags}}[global options] {{end}}command{{if .Flags}} [command options]{{end}} [arguments...]
 
 VERSION:
-   {{.Version}}
+   {{.Version}}{{if or .Author .Email}}
+
+AUTHOR:{{if .Author}}
+  {{.Author}}{{if .Email}} - <{{.Email}}>{{end}}{{else}}
+  {{.Email}}{{end}}{{end}}
 
 COMMANDS:
    {{range .Commands}}{{.Name}}{{with .ShortName}}, {{.}}{{end}}{{ "\t" }}{{.Usage}}
@@ -56,14 +60,13 @@ var helpCommand = Command{
 	Name:      "help",
 	ShortName: "h",
 	Usage:     "Shows a list of commands or help for one command",
-	Action: func(c *Context) error {
+	Action: func(c *Context) {
 		args := c.Args()
 		if args.Present() {
 			ShowCommandHelp(c, args.First())
 		} else {
 			ShowAppHelp(c)
 		}
-		return nil
 	},
 }
 
@@ -71,18 +74,18 @@ var helpSubcommand = Command{
 	Name:      "help",
 	ShortName: "h",
 	Usage:     "Shows a list of commands or help for one command",
-	Action: func(c *Context) error {
+	Action: func(c *Context) {
 		args := c.Args()
 		if args.Present() {
 			ShowCommandHelp(c, args.First())
 		} else {
 			ShowSubcommandHelp(c)
 		}
-		return nil
 	},
 }
 
 var HelpPrinter = printHelp
+var VersionPrinter = printVersion
 
 func ShowAppHelp(c *Context) {
 	HelpPrinter(AppHelpTemplate, c.App)
@@ -112,10 +115,14 @@ func ShowCommandHelp(c *Context, command string) {
 }
 
 func ShowSubcommandHelp(c *Context) {
-	ShowCommandHelp(c, c.Command.Name)
+	HelpPrinter(SubcommandHelpTemplate, c.App)
 }
 
 func ShowVersion(c *Context) {
+	VersionPrinter(c)
+}
+
+func printVersion(c *Context) {
 	fmt.Printf("%v version %v\n", c.App.Name, c.App.Version)
 }
 
@@ -148,7 +155,6 @@ func checkVersion(c *Context) bool {
 		ShowVersion(c)
 		return true
 	}
-
 	return false
 }
 
@@ -157,7 +163,6 @@ func checkHelp(c *Context) bool {
 		ShowAppHelp(c)
 		return true
 	}
-
 	return false
 }
 
@@ -166,7 +171,6 @@ func checkCommandHelp(c *Context, name string) bool {
 		ShowCommandHelp(c, name)
 		return true
 	}
-
 	return false
 }
 
@@ -175,7 +179,6 @@ func checkSubcommandHelp(c *Context) bool {
 		ShowSubcommandHelp(c)
 		return true
 	}
-
 	return false
 }
 

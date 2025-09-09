@@ -13,7 +13,8 @@ type Command struct {
 	Description     string
 	BashComplete    func(context *Context)
 	Before          func(context *Context) error
-	Action          func(context *Context) error
+	After           func(context *Context) error
+	Action          func(context *Context)
 	Subcommands     []Command
 	Flags           []Flag
 	SkipFlagParsing bool
@@ -21,7 +22,7 @@ type Command struct {
 }
 
 func (c Command) Run(ctx *Context) error {
-	if len(c.Subcommands) > 0 || c.Before != nil {
+	if len(c.Subcommands) > 0 || c.Before != nil || c.After != nil {
 		return c.startApp(ctx)
 	}
 	if !c.HideHelp {
@@ -99,6 +100,7 @@ func (c Command) startApp(ctx *Context) error {
 		app.BashComplete = c.BashComplete
 	}
 	app.Before = c.Before
+	app.After = c.After
 	if c.Action != nil {
 		app.Action = c.Action
 	} else {
