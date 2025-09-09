@@ -3,14 +3,15 @@ package cli
 import (
 	"flag"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 )
 
 var (
-	BashCompletionFlag = BoolFlag{"generate-bash-completion", ""}
-	VersionFlag        = BoolFlag{"version, v", "print the version"}
-	HelpFlag           = BoolFlag{"help, h", "show help"}
+	BashCompletionFlag = BoolFlag{"generate-bash-completion", "", ""}
+	VersionFlag        = BoolFlag{"version, v", "print the version", ""}
+	HelpFlag           = BoolFlag{"help, h", "show help", ""}
 )
 
 type Flag interface {
@@ -42,16 +43,23 @@ type Generic interface {
 }
 
 type GenericFlag struct {
-	Name  string
-	Value Generic
-	Usage string
+	Name   string
+	Value  Generic
+	Usage  string
+	EnvVar string
 }
 
 func (f GenericFlag) String() string {
-	return fmt.Sprintf("%s%s %v\t`%v` %s", prefixFor(f.Name), f.Name, f.Value, "-"+f.Name+" option -"+f.Name+" option", f.Usage)
+	return withEnvHint(f.EnvVar, fmt.Sprintf("%s%s %v\t`%v` %s", prefixFor(f.Name), f.Name, f.Value, "-"+f.Name+" option -"+f.Name+" option", f.Usage))
 }
 
 func (f GenericFlag) Apply(set *flag.FlagSet) {
+	val := f.Value
+	if f.EnvVar != "" {
+		if envVal := os.Getenv(f.EnvVar); envVal != "" {
+			val.Set(envVal)
+		}
+	}
 	eachName(f.Name, func(name string) {
 		set.Var(f.Value, name, f.Usage)
 	})
@@ -77,18 +85,28 @@ func (f *StringSlice) Value() []string {
 }
 
 type StringSliceFlag struct {
-	Name  string
-	Value *StringSlice
-	Usage string
+	Name   string
+	Value  *StringSlice
+	Usage  string
+	EnvVar string
 }
 
 func (f StringSliceFlag) String() string {
 	firstName := strings.Trim(strings.Split(f.Name, ",")[0], " ")
 	pref := prefixFor(firstName)
-	return fmt.Sprintf("%s '%v'\t%v", prefixedNames(f.Name), pref+firstName+" option "+pref+firstName+" option", f.Usage)
+	return withEnvHint(f.EnvVar, fmt.Sprintf("%s '%v'\t%v", prefixedNames(f.Name), pref+firstName+" option "+pref+firstName+" option", f.Usage))
 }
 
 func (f StringSliceFlag) Apply(set *flag.FlagSet) {
+	if f.EnvVar != "" {
+		if envVal := os.Getenv(f.EnvVar); envVal != "" {
+			newVal := &StringSlice{}
+			for _, s := range strings.Split(envVal, ",") {
+				newVal.Set(s)
+			}
+			f.Value = newVal
+		}
+	}
 	eachName(f.Name, func(name string) {
 		set.Var(f.Value, name, f.Usage)
 	})
@@ -119,18 +137,31 @@ func (f *IntSlice) Value() []int {
 }
 
 type IntSliceFlag struct {
-	Name  string
-	Value *IntSlice
-	Usage string
+	Name   string
+	Value  *IntSlice
+	Usage  string
+	EnvVar string
 }
 
 func (f IntSliceFlag) String() string {
 	firstName := strings.Trim(strings.Split(f.Name, ",")[0], " ")
 	pref := prefixFor(firstName)
-	return fmt.Sprintf("%s '%v'\t%v", prefixedNames(f.Name), pref+firstName+" option "+pref+firstName+" option", f.Usage)
+	return withEnvHint(f.EnvVar, fmt.Sprintf("%s '%v'\t%v", prefixedNames(f.Name), pref+firstName+" option "+pref+firstName+" option", f.Usage))
 }
 
 func (f IntSliceFlag) Apply(set *flag.FlagSet) {
+	if f.EnvVar != "" {
+		if envVal := os.Getenv(f.EnvVar); envVal != "" {
+			newVal := &IntSlice{}
+			for _, s := range strings.Split(envVal, ",") {
+				err := newVal.Set(s)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, err.Error())
+				}
+			}
+			f.Value = newVal
+		}
+	}
 	eachName(f.Name, func(name string) {
 		set.Var(f.Value, name, f.Usage)
 	})
@@ -141,17 +172,27 @@ func (f IntSliceFlag) getName() string {
 }
 
 type BoolFlag struct {
-	Name  string
-	Usage string
+	Name   string
+	Usage  string
+	EnvVar string
 }
 
 func (f BoolFlag) String() string {
-	return fmt.Sprintf("%s\t%v", prefixedNames(f.Name), f.Usage)
+	return withEnvHint(f.EnvVar, fmt.Sprintf("%s\t%v", prefixedNames(f.Name), f.Usage))
 }
 
 func (f BoolFlag) Apply(set *flag.FlagSet) {
+	val := false
+	if f.EnvVar != "" {
+		if envVal := os.Getenv(f.EnvVar); envVal != "" {
+			envValBool, err := strconv.ParseBool(envVal)
+			if err == nil {
+				val = envValBool
+			}
+		}
+	}
 	eachName(f.Name, func(name string) {
-		set.Bool(name, false, f.Usage)
+		set.Bool(name, val, f.Usage)
 	})
 }
 
@@ -160,17 +201,27 @@ func (f BoolFlag) getName() string {
 }
 
 type BoolTFlag struct {
-	Name  string
-	Usage string
+	Name   string
+	Usage  string
+	EnvVar string
 }
 
 func (f BoolTFlag) String() string {
-	return fmt.Sprintf("%s\t%v", prefixedNames(f.Name), f.Usage)
+	return withEnvHint(f.EnvVar, fmt.Sprintf("%s\t%v", prefixedNames(f.Name), f.Usage))
 }
 
 func (f BoolTFlag) Apply(set *flag.FlagSet) {
+	val := true
+	if f.EnvVar != "" {
+		if envVal := os.Getenv(f.EnvVar); envVal != "" {
+			envValBool, err := strconv.ParseBool(envVal)
+			if err == nil {
+				val = envValBool
+			}
+		}
+	}
 	eachName(f.Name, func(name string) {
-		set.Bool(name, true, f.Usage)
+		set.Bool(name, val, f.Usage)
 	})
 }
 
@@ -179,9 +230,10 @@ func (f BoolTFlag) getName() string {
 }
 
 type StringFlag struct {
-	Name  string
-	Value string
-	Usage string
+	Name   string
+	Value  string
+	Usage  string
+	EnvVar string
 }
 
 func (f StringFlag) String() string {
@@ -192,10 +244,15 @@ func (f StringFlag) String() string {
 	} else {
 		fmtString = "%s %v\t%v"
 	}
-	return fmt.Sprintf(fmtString, prefixedNames(f.Name), f.Value, f.Usage)
+	return withEnvHint(f.EnvVar, fmt.Sprintf(fmtString, prefixedNames(f.Name), f.Value, f.Usage))
 }
 
 func (f StringFlag) Apply(set *flag.FlagSet) {
+	if f.EnvVar != "" {
+		if envVal := os.Getenv(f.EnvVar); envVal != "" {
+			f.Value = envVal
+		}
+	}
 	eachName(f.Name, func(name string) {
 		set.String(name, f.Value, f.Usage)
 	})
@@ -206,16 +263,25 @@ func (f StringFlag) getName() string {
 }
 
 type IntFlag struct {
-	Name  string
-	Value int
-	Usage string
+	Name   string
+	Value  int
+	Usage  string
+	EnvVar string
 }
 
 func (f IntFlag) String() string {
-	return fmt.Sprintf("%s '%v'\t%v", prefixedNames(f.Name), f.Value, f.Usage)
+	return withEnvHint(f.EnvVar, fmt.Sprintf("%s '%v'\t%v", prefixedNames(f.Name), f.Value, f.Usage))
 }
 
 func (f IntFlag) Apply(set *flag.FlagSet) {
+	if f.EnvVar != "" {
+		if envVal := os.Getenv(f.EnvVar); envVal != "" {
+			envValInt, err := strconv.ParseUint(envVal, 10, 64)
+			if err == nil {
+				f.Value = int(envValInt)
+			}
+		}
+	}
 	eachName(f.Name, func(name string) {
 		set.Int(name, f.Value, f.Usage)
 	})
@@ -226,16 +292,25 @@ func (f IntFlag) getName() string {
 }
 
 type Float64Flag struct {
-	Name  string
-	Value float64
-	Usage string
+	Name   string
+	Value  float64
+	Usage  string
+	EnvVar string
 }
 
 func (f Float64Flag) String() string {
-	return fmt.Sprintf("%s '%v'\t%v", prefixedNames(f.Name), f.Value, f.Usage)
+	return withEnvHint(f.EnvVar, fmt.Sprintf("%s '%v'\t%v", prefixedNames(f.Name), f.Value, f.Usage))
 }
 
 func (f Float64Flag) Apply(set *flag.FlagSet) {
+	if f.EnvVar != "" {
+		if envVal := os.Getenv(f.EnvVar); envVal != "" {
+			envValFloat, err := strconv.ParseFloat(envVal, 10)
+			if err == nil {
+				f.Value = float64(envValFloat)
+			}
+		}
+	}
 	eachName(f.Name, func(name string) {
 		set.Float64(name, f.Value, f.Usage)
 	})
@@ -264,4 +339,12 @@ func prefixedNames(fullName string) (prefixed string) {
 		}
 	}
 	return
+}
+
+func withEnvHint(envVar, str string) string {
+	envText := ""
+	if envVar != "" {
+		envText = fmt.Sprintf(" [$%s]", envVar)
+	}
+	return str + envText
 }
