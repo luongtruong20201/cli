@@ -1,12 +1,10 @@
 package cli
 
-import (
-	"fmt"
-	"os"
-	"text/tabwriter"
-	"text/template"
-)
+import "fmt"
 
+// The text template for the Default help topic.
+// cli.go uses text/template to render templates. You can
+// render custom help text by setting this variable.
 var AppHelpTemplate = `NAME:
    {{.Name}} - {{.Usage}}
 
@@ -28,6 +26,9 @@ GLOBAL OPTIONS:
    {{end}}{{end}}
 `
 
+// The text template for the command help topic.
+// cli.go uses text/template to render templates. You can
+// render custom help text by setting this variable.
 var CommandHelpTemplate = `NAME:
    {{.Name}} - {{.Usage}}
 
@@ -42,6 +43,9 @@ OPTIONS:
    {{end}}{{ end }}
 `
 
+// The text template for the subcommand help topic.
+// cli.go uses text/template to render templates. You can
+// render custom help text by setting this variable.
 var SubcommandHelpTemplate = `NAME:
    {{.Name}} - {{.Usage}}
 
@@ -84,22 +88,29 @@ var helpSubcommand = Command{
 	},
 }
 
-var HelpPrinter = printHelp
+// Prints help for the App
+type helpPrinter func(templ string, data interface{})
+
+var HelpPrinter helpPrinter = nil
+
+// Prints version for the App
 var VersionPrinter = printVersion
 
 func ShowAppHelp(c *Context) {
 	HelpPrinter(AppHelpTemplate, c.App)
 }
 
+// Prints the list of subcommands as the default app completion method
 func DefaultAppComplete(c *Context) {
 	for _, command := range c.App.Commands {
-		fmt.Println(command.Name)
+		fmt.Fprintln(c.App.Writer, command.Name)
 		if command.ShortName != "" {
-			fmt.Println(command.ShortName)
+			fmt.Fprintln(c.App.Writer, command.ShortName)
 		}
 	}
 }
 
+// Prints help for the given command
 func ShowCommandHelp(c *Context, command string) {
 	for _, c := range c.App.Commands {
 		if c.HasName(command) {
@@ -107,25 +118,29 @@ func ShowCommandHelp(c *Context, command string) {
 			return
 		}
 	}
+
 	if c.App.CommandNotFound != nil {
 		c.App.CommandNotFound(c, command)
 	} else {
-		fmt.Printf("No help topic for '%v'\n", command)
+		fmt.Fprintf(c.App.Writer, "No help topic for '%v'\n", command)
 	}
 }
 
+// Prints help for the given subcommand
 func ShowSubcommandHelp(c *Context) {
 	HelpPrinter(SubcommandHelpTemplate, c.App)
 }
 
+// Prints the version number of the App
 func ShowVersion(c *Context) {
 	VersionPrinter(c)
 }
 
 func printVersion(c *Context) {
-	fmt.Printf("%v version %v\n", c.App.Name, c.App.Version)
+	fmt.Fprintf(c.App.Writer, "%v version %v\n", c.App.Name, c.App.Version)
 }
 
+// Prints the lists of commands within a given context
 func ShowCompletions(c *Context) {
 	a := c.App
 	if a != nil && a.BashComplete != nil {
@@ -133,6 +148,7 @@ func ShowCompletions(c *Context) {
 	}
 }
 
+// Prints the custom completions for a given command
 func ShowCommandCompletions(ctx *Context, command string) {
 	c := ctx.App.Command(command)
 	if c != nil && c.BashComplete != nil {
@@ -140,21 +156,12 @@ func ShowCommandCompletions(ctx *Context, command string) {
 	}
 }
 
-func printHelp(templ string, data interface{}) {
-	w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
-	t := template.Must(template.New("help").Parse(templ))
-	err := t.Execute(w, data)
-	if err != nil {
-		panic(err)
-	}
-	w.Flush()
-}
-
 func checkVersion(c *Context) bool {
 	if c.GlobalBool("version") {
 		ShowVersion(c)
 		return true
 	}
+
 	return false
 }
 
@@ -163,6 +170,7 @@ func checkHelp(c *Context) bool {
 		ShowAppHelp(c)
 		return true
 	}
+
 	return false
 }
 
@@ -171,6 +179,7 @@ func checkCommandHelp(c *Context, name string) bool {
 		ShowCommandHelp(c, name)
 		return true
 	}
+
 	return false
 }
 
@@ -179,14 +188,16 @@ func checkSubcommandHelp(c *Context) bool {
 		ShowSubcommandHelp(c)
 		return true
 	}
+
 	return false
 }
 
 func checkCompletions(c *Context) bool {
-	if c.GlobalBool(BashCompletionFlag.Name) && c.App.EnableBashCompletion {
+	if (c.GlobalBool(BashCompletionFlag.Name) || c.Bool(BashCompletionFlag.Name)) && c.App.EnableBashCompletion {
 		ShowCompletions(c)
 		return true
 	}
+
 	return false
 }
 
@@ -195,5 +206,6 @@ func checkCommandCompletions(c *Context, name string) bool {
 		ShowCommandCompletions(c, name)
 		return true
 	}
+
 	return false
 }

@@ -29,9 +29,9 @@ func TestContext_Int(t *testing.T) {
 
 func TestContext_Duration(t *testing.T) {
 	set := flag.NewFlagSet("test", 0)
-	set.Duration("myFlag", time.Duration(12*time.Second), "doc")
+	set.Duration("myflag", time.Duration(12*time.Second), "doc")
 	c := cli.NewContext(nil, set, set)
-	expect(t, c.Duration("myFlag"), 12*time.Second)
+	expect(t, c.Duration("myflag"), time.Duration(12*time.Second))
 }
 
 func TestContext_String(t *testing.T) {
@@ -72,6 +72,7 @@ func TestContext_IsSet(t *testing.T) {
 	globalSet.Bool("myflagGlobal", true, "doc")
 	c := cli.NewContext(nil, set, globalSet)
 	set.Parse([]string{"--myflag", "bat", "baz"})
+	globalSet.Parse([]string{"--myflagGlobal", "bat", "baz"})
 	expect(t, c.IsSet("myflag"), true)
 	expect(t, c.IsSet("otherflag"), false)
 	expect(t, c.IsSet("bogusflag"), false)

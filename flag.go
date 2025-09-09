@@ -9,28 +9,36 @@ import (
 	"time"
 )
 
+// This flag enables bash-completion for all commands and subcommands
 var BashCompletionFlag = BoolFlag{
 	Name: "generate-bash-completion",
 }
 
+// This flag prints the version for the application
 var VersionFlag = BoolFlag{
 	Name:  "version, v",
 	Usage: "print the version",
 }
 
+// This flag prints the help for all commands and subcommands
 var HelpFlag = BoolFlag{
 	Name:  "help, h",
 	Usage: "show help",
 }
 
+// Flag is a common interface related to parsing flags in cli.
+// For more advanced flag parsing techniques, it is recomended that
+// this interface be implemented.
 type Flag interface {
 	fmt.Stringer
+	// Apply Flag settings to the given flag set
 	Apply(*flag.FlagSet)
 	getName() string
 }
 
 func flagSet(name string, flags []Flag) *flag.FlagSet {
 	set := flag.NewFlagSet(name, flag.ContinueOnError)
+
 	for _, f := range flags {
 		f.Apply(set)
 	}
@@ -45,11 +53,13 @@ func eachName(longName string, fn func(string)) {
 	}
 }
 
+// Generic is a generic parseable type identified by a specific flag
 type Generic interface {
 	Set(value string) error
 	String() string
 }
 
+// GenericFlag is the flag type for types implementing Generic
 type GenericFlag struct {
 	Name   string
 	Value  Generic
@@ -64,14 +74,11 @@ func (f GenericFlag) String() string {
 func (f GenericFlag) Apply(set *flag.FlagSet) {
 	val := f.Value
 	if f.EnvVar != "" {
-		for _, envVar := range strings.Split(f.EnvVar, ",") {
-			envVar = strings.TrimSpace(envVar)
-			if envVal := os.Getenv(envVar); envVal != "" {
-				val.Set(envVal)
-				break
-			}
+		if envVal := os.Getenv(f.EnvVar); envVal != "" {
+			val.Set(envVal)
 		}
 	}
+
 	eachName(f.Name, func(name string) {
 		set.Var(f.Value, name, f.Usage)
 	})
@@ -111,19 +118,15 @@ func (f StringSliceFlag) String() string {
 
 func (f StringSliceFlag) Apply(set *flag.FlagSet) {
 	if f.EnvVar != "" {
-		for _, envVar := range strings.Split(f.EnvVar, ",") {
-			envVar = strings.TrimSpace(envVar)
-			if envVal := os.Getenv(envVar); envVal != "" {
-				newVal := &StringSlice{}
-				for _, s := range strings.Split(envVal, ",") {
-					s = strings.TrimSpace(s)
-					newVal.Set(s)
-				}
-				f.Value = newVal
-				break
+		if envVal := os.Getenv(f.EnvVar); envVal != "" {
+			newVal := &StringSlice{}
+			for _, s := range strings.Split(envVal, ",") {
+				newVal.Set(s)
 			}
+			f.Value = newVal
 		}
 	}
+
 	eachName(f.Name, func(name string) {
 		set.Var(f.Value, name, f.Usage)
 	})
@@ -136,6 +139,7 @@ func (f StringSliceFlag) getName() string {
 type IntSlice []int
 
 func (f *IntSlice) Set(value string) error {
+
 	tmp, err := strconv.Atoi(value)
 	if err != nil {
 		return err
@@ -168,22 +172,18 @@ func (f IntSliceFlag) String() string {
 
 func (f IntSliceFlag) Apply(set *flag.FlagSet) {
 	if f.EnvVar != "" {
-		for _, envVar := range strings.Split(f.EnvVar, ",") {
-			envVar = strings.TrimSpace(envVar)
-			if envVal := os.Getenv(envVar); envVal != "" {
-				newVal := &IntSlice{}
-				for _, s := range strings.Split(envVal, ",") {
-					s = strings.TrimSpace(s)
-					err := newVal.Set(s)
-					if err != nil {
-						fmt.Fprintf(os.Stderr, "%s", err.Error())
-					}
+		if envVal := os.Getenv(f.EnvVar); envVal != "" {
+			newVal := &IntSlice{}
+			for _, s := range strings.Split(envVal, ",") {
+				err := newVal.Set(s)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "%s", err.Error())
 				}
-				f.Value = newVal
-				break
 			}
+			f.Value = newVal
 		}
 	}
+
 	eachName(f.Name, func(name string) {
 		set.Var(f.Value, name, f.Usage)
 	})
@@ -206,17 +206,14 @@ func (f BoolFlag) String() string {
 func (f BoolFlag) Apply(set *flag.FlagSet) {
 	val := false
 	if f.EnvVar != "" {
-		for _, envVar := range strings.Split(f.EnvVar, ",") {
-			envVar = strings.TrimSpace(envVar)
-			if envVal := os.Getenv(envVar); envVal != "" {
-				envValBool, err := strconv.ParseBool(envVal)
-				if err == nil {
-					val = envValBool
-				}
-				break
+		if envVal := os.Getenv(f.EnvVar); envVal != "" {
+			envValBool, err := strconv.ParseBool(envVal)
+			if err == nil {
+				val = envValBool
 			}
 		}
 	}
+
 	eachName(f.Name, func(name string) {
 		set.Bool(name, val, f.Usage)
 	})
@@ -239,17 +236,14 @@ func (f BoolTFlag) String() string {
 func (f BoolTFlag) Apply(set *flag.FlagSet) {
 	val := true
 	if f.EnvVar != "" {
-		for _, envVar := range strings.Split(f.EnvVar, ",") {
-			envVar = strings.TrimSpace(envVar)
-			if envVal := os.Getenv(envVar); envVal != "" {
-				envValBool, err := strconv.ParseBool(envVal)
-				if err == nil {
-					val = envValBool
-					break
-				}
+		if envVal := os.Getenv(f.EnvVar); envVal != "" {
+			envValBool, err := strconv.ParseBool(envVal)
+			if err == nil {
+				val = envValBool
 			}
 		}
 	}
+
 	eachName(f.Name, func(name string) {
 		set.Bool(name, val, f.Usage)
 	})
@@ -269,24 +263,23 @@ type StringFlag struct {
 func (f StringFlag) String() string {
 	var fmtString string
 	fmtString = "%s %v\t%v"
+
 	if len(f.Value) > 0 {
 		fmtString = "%s '%v'\t%v"
 	} else {
 		fmtString = "%s %v\t%v"
 	}
+
 	return withEnvHint(f.EnvVar, fmt.Sprintf(fmtString, prefixedNames(f.Name), f.Value, f.Usage))
 }
 
 func (f StringFlag) Apply(set *flag.FlagSet) {
 	if f.EnvVar != "" {
-		for _, envVar := range strings.Split(f.EnvVar, ",") {
-			envVar = strings.TrimSpace(envVar)
-			if envVal := os.Getenv(envVar); envVal != "" {
-				f.Value = envVal
-				break
-			}
+		if envVal := os.Getenv(f.EnvVar); envVal != "" {
+			f.Value = envVal
 		}
 	}
+
 	eachName(f.Name, func(name string) {
 		set.String(name, f.Value, f.Usage)
 	})
@@ -309,17 +302,14 @@ func (f IntFlag) String() string {
 
 func (f IntFlag) Apply(set *flag.FlagSet) {
 	if f.EnvVar != "" {
-		for _, envVar := range strings.Split(f.EnvVar, ",") {
-			envVar = strings.TrimSpace(envVar)
-			if envVal := os.Getenv(envVar); envVal != "" {
-				envValInt, err := strconv.ParseUint(envVal, 10, 64)
-				if err == nil {
-					f.Value = int(envValInt)
-					break
-				}
+		if envVal := os.Getenv(f.EnvVar); envVal != "" {
+			envValInt, err := strconv.ParseUint(envVal, 10, 64)
+			if err == nil {
+				f.Value = int(envValInt)
 			}
 		}
 	}
+
 	eachName(f.Name, func(name string) {
 		set.Int(name, f.Value, f.Usage)
 	})
@@ -342,17 +332,14 @@ func (f DurationFlag) String() string {
 
 func (f DurationFlag) Apply(set *flag.FlagSet) {
 	if f.EnvVar != "" {
-		for _, envVar := range strings.Split(f.EnvVar, ",") {
-			envVar = strings.TrimSpace(envVar)
-			if envVal := os.Getenv(envVar); envVal != "" {
-				envValDuration, err := time.ParseDuration(envVal)
-				if err == nil {
-					f.Value = envValDuration
-					break
-				}
+		if envVal := os.Getenv(f.EnvVar); envVal != "" {
+			envValDuration, err := time.ParseDuration(envVal)
+			if err == nil {
+				f.Value = envValDuration
 			}
 		}
 	}
+
 	eachName(f.Name, func(name string) {
 		set.Duration(name, f.Value, f.Usage)
 	})
@@ -375,16 +362,14 @@ func (f Float64Flag) String() string {
 
 func (f Float64Flag) Apply(set *flag.FlagSet) {
 	if f.EnvVar != "" {
-		for _, envVar := range strings.Split(f.EnvVar, ",") {
-			envVar = strings.TrimSpace(envVar)
-			if envVal := os.Getenv(envVar); envVal != "" {
-				envValFloat, err := strconv.ParseFloat(envVal, 10)
-				if err == nil {
-					f.Value = float64(envValFloat)
-				}
+		if envVal := os.Getenv(f.EnvVar); envVal != "" {
+			envValFloat, err := strconv.ParseFloat(envVal, 10)
+			if err == nil {
+				f.Value = float64(envValFloat)
 			}
 		}
 	}
+
 	eachName(f.Name, func(name string) {
 		set.Float64(name, f.Value, f.Usage)
 	})
@@ -400,6 +385,7 @@ func prefixFor(name string) (prefix string) {
 	} else {
 		prefix = "--"
 	}
+
 	return
 }
 
@@ -418,7 +404,7 @@ func prefixedNames(fullName string) (prefixed string) {
 func withEnvHint(envVar, str string) string {
 	envText := ""
 	if envVar != "" {
-		envText = fmt.Sprintf(" [$%s]", strings.Join(strings.Split(envVar, ","), ", $"))
+		envText = fmt.Sprintf(" [$%s]", envVar)
 	}
 	return str + envText
 }
