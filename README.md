@@ -15,7 +15,7 @@ This is where cli.go comes into play. cli.go makes command line programming fun,
 
 ## Installation
 
-Make sure you have the a working Go environment (go 1.1 is _required_). [See the install instructions](http://golang.org/doc/install.html).
+Make sure you have a working Go environment (go 1.1 is _required_). [See the install instructions](http://golang.org/doc/install.html).
 
 To install cli.go, simply run:
 
@@ -147,7 +147,11 @@ Setting and querying flags is simple.
 ```go
 ...
 app.Flags = []cli.Flag {
-  cli.StringFlag{"lang", "english", "language for the greeting"},
+  cli.StringFlag{
+    Name: "lang",
+    Value: "english",
+    Usage: "language for the greeting",
+  },
 }
 app.Action = func(c *cli.Context) {
   name := "someone"
@@ -163,6 +167,37 @@ app.Action = func(c *cli.Context) {
 ...
 ```
 
+#### Alternate Names
+
+You can set alternate (or short) names for flags by providing a comma-delimited list for the Name. e.g.
+
+```go
+app.Flags = []cli.Flag {
+  cli.StringFlag{
+    Name: "lang, l",
+    Value: "english",
+    Usage: "language for the greeting",
+  },
+}
+```
+
+#### Values from the Environment
+
+You can also have the default value set from the environment via EnvVar. e.g.
+
+```go
+app.Flags = []cli.Flag {
+  cli.StringFlag{
+    Name: "lang, l",
+    Value: "english",
+    Usage: "language for the greeting",
+    EnvVar: "APP_LANG",
+  },
+}
+```
+
+That flag can then be set with `--lang spanish` or `-l spanish`. Note that giving two different forms of the same flag in the same command invocation is an error.
+
 ### Subcommands
 
 Subcommands can be defined for a more git-like command line app.
@@ -175,7 +210,7 @@ app.Commands = []cli.Command{
     ShortName: "a",
     Usage:     "add a task to the list",
     Action: func(c *cli.Context) {
-      println("added task: ", c.FirstArg())
+      println("added task: ", c.Args().First())
     },
   },
   {
@@ -183,12 +218,74 @@ app.Commands = []cli.Command{
     ShortName: "c",
     Usage:     "complete a task on the list",
     Action: func(c *cli.Context) {
-      println("completed task: ", c.FirstArg())
+      println("completed task: ", c.Args().First())
+    },
+  },
+  {
+    Name:      "template",
+    ShortName: "r",
+    Usage:     "options for task templates",
+    Subcommands: []cli.Command{
+      {
+        Name:  "add",
+        Usage: "add a new template",
+        Action: func(c *cli.Context) {
+            println("new task template: ", c.Args().First())
+        },
+      },
+      {
+        Name:  "remove",
+        Usage: "remove an existing template",
+        Action: func(c *cli.Context) {
+          println("removed task template: ", c.Args().First())
+        },
+      },
     },
   },
 }
 ...
 ```
+
+### Bash Completion
+
+You can enable completion commands by setting the EnableBashCompletion
+flag on the App object. By default, this setting will only auto-complete to
+show an app's subcommands, but you can write your own completion methods for
+the App or its subcommands.
+
+```go
+...
+var tasks = []string{"cook", "clean", "laundry", "eat", "sleep", "code"}
+app := cli.NewApp()
+app.EnableBashCompletion = true
+app.Commands = []cli.Command{
+  {
+    Name: "complete",
+    ShortName: "c",
+    Usage: "complete a task on the list",
+    Action: func(c *cli.Context) {
+       println("completed task: ", c.Args().First())
+    },
+    BashComplete: func(c *cli.Context) {
+      // This will complete if no args are passed
+      if len(c.Args()) > 0 {
+        return
+      }
+      for _, t := range tasks {
+        println(t)
+      }
+    },
+  }
+}
+...
+```
+
+#### To Enable
+
+Source the autocomplete/bash_autocomplete file in your .bashrc file while
+setting the PROG variable to the name of your program:
+
+`PROG=myprogram source /.../cli/autocomplete/bash_autocomplete`
 
 ## About
 

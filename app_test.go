@@ -20,6 +20,7 @@ import (
 // }
 
 // func ExampleAppSubcommand() {
+// 	// set args for examples sake
 // 	os.Args = []string{"say", "hi", "english", "--name", "Jeremy"}
 // 	app := cli.NewApp()
 // 	app.Name = "say"
@@ -36,7 +37,11 @@ import (
 // 					Usage:       "sends a greeting in english",
 // 					Description: "greets someone in english",
 // 					Flags: []cli.Flag{
-// 						cli.StringFlag{"name", "Bob", "Name of the person to greet"},
+// 						cli.StringFlag{
+// 							Name:  "name",
+// 							Value: "Bob",
+// 							Usage: "Name of the person to greet",
+// 						},
 // 					},
 // 					Action: func(c *cli.Context) {
 // 						fmt.Println("Hello,", c.String("name"))
@@ -45,6 +50,9 @@ import (
 // 			},
 // 		},
 // 	}
+
+// 	app.Run(os.Args)
+// }
 
 // 	app.Run(os.Args)
 // }

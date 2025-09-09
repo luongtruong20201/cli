@@ -3,90 +3,288 @@ package cli_test
 import (
 	"cli"
 	"fmt"
+	"os"
 	"reflect"
 	"strings"
 	"testing"
 )
 
-var boolFlagTests = []struct {
-	name     string
-	expected string
-}{
-	{"help", "--help\t"},
-	{"h", "-h\t"},
-}
-
 func TestBoolFlagHelpOutput(t *testing.T) {
-
-	for _, test := range boolFlagTests {
-		flag := cli.BoolFlag{Name: test.name}
+	testCases := []struct {
+		name     string
+		expected string
+	}{
+		{"help", "--help\t"},
+		{"h", "-h\t"},
+	}
+	for _, tc := range testCases {
+		flag := cli.BoolFlag{
+			Name: tc.name,
+		}
 		output := flag.String()
-
-		if output != test.expected {
-			t.Errorf("%s does not match %s", output, test.expected)
+		fmt.Println("check output:", output)
+		if output != tc.expected {
+			t.Errorf("%s does not match %s", output, tc.expected)
 		}
 	}
-}
-
-var stringFlagTests = []struct {
-	name     string
-	value    string
-	expected string
-}{
-	{"help", "", "--help \t"},
-	{"h", "", "-h \t"},
-	{"h", "", "-h \t"},
-	{"test", "Something", "--test 'Something'\t"},
 }
 
 func TestStringFlagHelpOutput(t *testing.T) {
-
-	for _, test := range stringFlagTests {
-		flag := cli.StringFlag{Name: test.name, Value: test.value}
+	testCases := []struct {
+		name     string
+		value    string
+		expected string
+	}{
+		{"help", "", "--help \t"},
+		{"h", "", "-h \t"},
+		{"h", "", "-h \t"},
+		{"test", "something", "--test 'something'\t"},
+	}
+	for _, tc := range testCases {
+		flag := cli.StringFlag{
+			Name:  tc.name,
+			Value: tc.value,
+		}
 		output := flag.String()
+		fmt.Println("check output:", output)
+		if output != tc.expected {
+			t.Errorf("%s does not match %s", output, tc.expected)
+		}
+	}
+}
 
+func TestStringFlagWithEnvVarHelpOutput(t *testing.T) {
+	testCases := []struct {
+		name     string
+		value    string
+		expected string
+	}{
+		{"help", "", "--help \t"},
+		{"h", "", "-h \t"},
+		{"h", "", "-h \t"},
+		{"test", "something", "--test 'something'\t"},
+	}
+
+	os.Setenv("APP_FOO", "derp")
+	for _, test := range testCases {
+		flag := cli.StringFlag{
+			Name:   test.name,
+			Value:  test.value,
+			EnvVar: "APP_FOO",
+		}
+		output := flag.String()
+		fmt.Println("check output:", output)
+		if !strings.HasSuffix(output, " [$APP_FOO]") {
+			t.Errorf("%s does not end with [$APP_FOO]", output)
+		}
+	}
+}
+
+func TestStringSliceFlagHelpOutput(t *testing.T) {
+	var testCases = []struct {
+		name     string
+		value    *cli.StringSlice
+		expected string
+	}{
+		{"help", &cli.StringSlice{""}, "--help '--help option --help option'\t"},
+		{"h", &cli.StringSlice{""}, "-h '-h option -h option'\t"},
+		{"h", &cli.StringSlice{""}, "-h '-h option -h option'\t"},
+		{"test", &cli.StringSlice{"Something"}, "--test '--test option --test option'\t"},
+	}
+
+	for _, test := range testCases {
+		flag := cli.StringSliceFlag{
+			Name:  test.name,
+			Value: test.value,
+		}
+		output := flag.String()
+		fmt.Println("check output:", output)
 		if output != test.expected {
 			t.Errorf("%s does not match %s", output, test.expected)
 		}
 	}
 }
 
-var intFlagTests = []struct {
-	name     string
-	expected string
-}{
-	{"help", "--help '0'\t"},
-	{"h", "-h '0'\t"},
+func TestStringSliceFlagWithEnvVarHelpOutput(t *testing.T) {
+	var testCases = []struct {
+		name     string
+		value    *cli.StringSlice
+		expected string
+	}{
+		{"help", &cli.StringSlice{""}, "--help '--help option --help option'\t"},
+		{"h", &cli.StringSlice{""}, "-h '-h option -h option'\t"},
+		{"h", &cli.StringSlice{""}, "-h '-h option -h option'\t"},
+		{"test", &cli.StringSlice{"Something"}, "--test '--test option --test option'\t"},
+	}
+
+	os.Setenv("APP_QWWX", "11,4")
+	for _, test := range testCases {
+		flag := cli.StringSliceFlag{Name: test.name, Value: test.value, EnvVar: "APP_QWWX"}
+		output := flag.String()
+		fmt.Println("check output:", output)
+		if !strings.HasSuffix(output, " [$APP_QWWX]") {
+			t.Errorf("%q does not end with [$APP_QWWX]", output)
+		}
+	}
 }
 
 func TestIntFlagHelpOutput(t *testing.T) {
-
-	for _, test := range intFlagTests {
+	testCases := []struct {
+		name     string
+		expected string
+	}{
+		{"help", "--help '0'\t"},
+		{"h", "-h '0'\t"},
+	}
+	for _, test := range testCases {
 		flag := cli.IntFlag{Name: test.name}
 		output := flag.String()
-
+		fmt.Println("check output:", output)
 		if output != test.expected {
 			t.Errorf("%s does not match %s", output, test.expected)
 		}
 	}
 }
 
-var float64FlagTests = []struct {
-	name     string
-	expected string
-}{
-	{"help", "--help '0'\t"},
-	{"h", "-h '0'\t"},
+func TestIntFlagWithEnvVarHelpOutput(t *testing.T) {
+	testCases := []struct {
+		name     string
+		expected string
+	}{
+		{"help", "--help '0'\t"},
+		{"h", "-h '0'\t"},
+	}
+	os.Setenv("APP_BAR", "2")
+	for _, test := range testCases {
+		flag := cli.IntFlag{Name: test.name, EnvVar: "APP_BAR"}
+		output := flag.String()
+		fmt.Println("check output:", output)
+		if !strings.HasSuffix(output, " [$APP_BAR]") {
+			t.Errorf("%s does not end with [$APP_BAR]", output)
+		}
+	}
+}
+
+func TestIntSliceFlagHelpOutput(t *testing.T) {
+	testCases := []struct {
+		name     string
+		value    *cli.IntSlice
+		expected string
+	}{
+		{"help", &cli.IntSlice{}, "--help '--help option --help option'\t"},
+		{"h", &cli.IntSlice{}, "-h '-h option -h option'\t"},
+		{"h", &cli.IntSlice{}, "-h '-h option -h option'\t"},
+		{"test", &cli.IntSlice{9}, "--test '--test option --test option'\t"},
+	}
+	for _, test := range testCases {
+		flag := cli.IntSliceFlag{Name: test.name, Value: test.value}
+		output := flag.String()
+		fmt.Println("check output:", output)
+		if output != test.expected {
+			t.Errorf("%q does not match %q", output, test.expected)
+		}
+	}
+}
+
+func TestIntSliceFlagWithEnvVarHelpOutput(t *testing.T) {
+	testCases := []struct {
+		name     string
+		value    *cli.IntSlice
+		expected string
+	}{
+		{"help", &cli.IntSlice{}, "--help '--help option --help option'\t"},
+		{"h", &cli.IntSlice{}, "-h '-h option -h option'\t"},
+		{"h", &cli.IntSlice{}, "-h '-h option -h option'\t"},
+		{"test", &cli.IntSlice{9}, "--test '--test option --test option'\t"},
+	}
+
+	os.Setenv("APP_SMURF", "42,3")
+	for _, test := range testCases {
+		flag := cli.IntSliceFlag{Name: test.name, Value: test.value, EnvVar: "APP_SMURF"}
+		output := flag.String()
+		fmt.Println("check output:", output)
+		if !strings.HasSuffix(output, " [$APP_SMURF]") {
+			t.Errorf("%q does not end with [$APP_SMURF]", output)
+		}
+	}
 }
 
 func TestFloat64FlagHelpOutput(t *testing.T) {
-
-	for _, test := range float64FlagTests {
+	testCases := []struct {
+		name     string
+		expected string
+	}{
+		{"help", "--help '0'\t"},
+		{"h", "-h '0'\t"},
+	}
+	for _, test := range testCases {
 		flag := cli.Float64Flag{Name: test.name}
 		output := flag.String()
-
+		fmt.Println("check output:", output)
 		if output != test.expected {
 			t.Errorf("%s does not match %s", output, test.expected)
+		}
+	}
+}
+
+func TestFloat64FlagWithEnvVarHelpOutput(t *testing.T) {
+	testCases := []struct {
+		name     string
+		expected string
+	}{
+		{"help", "--help '0'\t"},
+		{"h", "-h '0'\t"},
+	}
+	os.Setenv("APP_BAZ", "99.4")
+	for _, test := range testCases {
+		flag := cli.Float64Flag{Name: test.name, EnvVar: "APP_BAZ"}
+		output := flag.String()
+		fmt.Println("check output:", output)
+		if !strings.HasSuffix(output, " [$APP_BAZ]") {
+			t.Errorf("%s does not end with [$APP_BAZ]", output)
+		}
+	}
+}
+
+func TestGenericFlagHelpOutput(t *testing.T) {
+	testCases := []struct {
+		name     string
+		value    cli.Generic
+		expected string
+	}{
+		{"help", &Parser{}, "--help <nil>\t`-help option -help option` "},
+		{"h", &Parser{}, "-h <nil>\t`-h option -h option` "},
+		{"test", &Parser{}, "--test <nil>\t`-test option -test option` "},
+	}
+	for _, test := range testCases {
+		flag := cli.GenericFlag{Name: test.name}
+		output := flag.String()
+		fmt.Println("check output:", output)
+
+		if output != test.expected {
+			t.Errorf("%q does not match %q", output, test.expected)
+		}
+	}
+}
+
+func TestGenericFlagWithEnvVarHelpOutput(t *testing.T) {
+	testCases := []struct {
+		name     string
+		value    cli.Generic
+		expected string
+	}{
+		{"help", &Parser{}, "--help <nil>\t`-help option -help option` "},
+		{"h", &Parser{}, "-h <nil>\t`-h option -h option` "},
+		{"test", &Parser{}, "--test <nil>\t`-test option -test option` "},
+	}
+	os.Setenv("APP_ZAP", "3")
+	for _, test := range testCases {
+		flag := cli.GenericFlag{Name: test.name, EnvVar: "APP_ZAP"}
+		output := flag.String()
+		fmt.Println("check output:", output)
+
+		if !strings.HasSuffix(output, " [$APP_ZAP]") {
+			t.Errorf("%s does not end with [$APP_ZAP]", output)
 		}
 	}
 }
@@ -107,6 +305,23 @@ func TestParseMultiString(t *testing.T) {
 	}).Run([]string{"run", "-s", "10"})
 }
 
+func TestParseMultiStringFromEnv(t *testing.T) {
+	os.Setenv("APP_COUNT", "20")
+	(&cli.App{
+		Flags: []cli.Flag{
+			cli.StringFlag{Name: "count, c", EnvVar: "APP_COUNT"},
+		},
+		Action: func(ctx *cli.Context) {
+			if ctx.String("count") != "20" {
+				t.Errorf("main name not set")
+			}
+			if ctx.String("c") != "20" {
+				t.Errorf("short name not set")
+			}
+		},
+	}).Run([]string{"run"})
+}
+
 func TestParseMultiStringSlice(t *testing.T) {
 	(&cli.App{
 		Flags: []cli.Flag{
@@ -121,6 +336,24 @@ func TestParseMultiStringSlice(t *testing.T) {
 			}
 		},
 	}).Run([]string{"run", "-s", "10", "-s", "20"})
+}
+
+func TestParseMultiStringSliceFromEnv(t *testing.T) {
+	os.Setenv("APP_INTERVALS", "20,30,40")
+
+	(&cli.App{
+		Flags: []cli.Flag{
+			cli.StringSliceFlag{Name: "intervals, i", Value: &cli.StringSlice{}, EnvVar: "APP_INTERVALS"},
+		},
+		Action: func(ctx *cli.Context) {
+			if !reflect.DeepEqual(ctx.StringSlice("intervals"), []string{"20", "30", "40"}) {
+				t.Errorf("main name not set from env")
+			}
+			if !reflect.DeepEqual(ctx.StringSlice("i"), []string{"20", "30", "40"}) {
+				t.Errorf("short name not set from env")
+			}
+		},
+	}).Run([]string{"run"})
 }
 
 func TestParseMultiInt(t *testing.T) {
@@ -140,6 +373,93 @@ func TestParseMultiInt(t *testing.T) {
 	a.Run([]string{"run", "-s", "10"})
 }
 
+func TestParseMultiIntFromEnv(t *testing.T) {
+	os.Setenv("APP_TIMEOUT_SECONDS", "10")
+	a := cli.App{
+		Flags: []cli.Flag{
+			cli.IntFlag{Name: "timeout, t", EnvVar: "APP_TIMEOUT_SECONDS"},
+		},
+		Action: func(ctx *cli.Context) {
+			if ctx.Int("timeout") != 10 {
+				t.Errorf("main name not set")
+			}
+			if ctx.Int("t") != 10 {
+				t.Errorf("short name not set")
+			}
+		},
+	}
+	a.Run([]string{"run"})
+}
+
+func TestParseMultiIntSlice(t *testing.T) {
+	(&cli.App{
+		Flags: []cli.Flag{
+			cli.IntSliceFlag{Name: "serve, s", Value: &cli.IntSlice{}},
+		},
+		Action: func(ctx *cli.Context) {
+			if !reflect.DeepEqual(ctx.IntSlice("serve"), []int{10, 20}) {
+				t.Errorf("main name not set")
+			}
+			if !reflect.DeepEqual(ctx.IntSlice("s"), []int{10, 20}) {
+				t.Errorf("short name not set")
+			}
+		},
+	}).Run([]string{"run", "-s", "10", "-s", "20"})
+}
+
+func TestParseMultiIntSliceFromEnv(t *testing.T) {
+	os.Setenv("APP_INTERVALS", "20,30,40")
+
+	(&cli.App{
+		Flags: []cli.Flag{
+			cli.IntSliceFlag{Name: "intervals, i", Value: &cli.IntSlice{}, EnvVar: "APP_INTERVALS"},
+		},
+		Action: func(ctx *cli.Context) {
+			if !reflect.DeepEqual(ctx.IntSlice("intervals"), []int{20, 30, 40}) {
+				t.Errorf("main name not set from env")
+			}
+			if !reflect.DeepEqual(ctx.IntSlice("i"), []int{20, 30, 40}) {
+				t.Errorf("short name not set from env")
+			}
+		},
+	}).Run([]string{"run"})
+}
+
+func TestParseMultiFloat64(t *testing.T) {
+	a := cli.App{
+		Flags: []cli.Flag{
+			cli.Float64Flag{Name: "serve, s"},
+		},
+		Action: func(ctx *cli.Context) {
+			if ctx.Float64("serve") != 10.2 {
+				t.Errorf("main name not set")
+			}
+			if ctx.Float64("s") != 10.2 {
+				t.Errorf("short name not set")
+			}
+		},
+	}
+	a.Run([]string{"run", "-s", "10.2"})
+}
+
+func TestParseMultiFloat64FromEnv(t *testing.T) {
+	os.Setenv("APP_TIMEOUT_SECONDS", "15.5")
+	a := cli.App{
+		Flags: []cli.Flag{
+			cli.Float64Flag{Name: "timeout, t", EnvVar: "APP_TIMEOUT_SECONDS"},
+		},
+		Action: func(ctx *cli.Context) {
+			if ctx.Float64("timeout") != 15.5 {
+				t.Errorf("main name not set")
+			}
+			if ctx.Float64("t") != 15.5 {
+				t.Errorf("short name not set")
+			}
+		},
+	}
+	a.Run([]string{"run"})
+}
+
 func TestParseMultiBool(t *testing.T) {
 	a := cli.App{
 		Flags: []cli.Flag{
@@ -155,6 +475,59 @@ func TestParseMultiBool(t *testing.T) {
 		},
 	}
 	a.Run([]string{"run", "--serve"})
+}
+
+func TestParseMultiBoolFromEnv(t *testing.T) {
+	os.Setenv("APP_DEBUG", "1")
+	a := cli.App{
+		Flags: []cli.Flag{
+			cli.BoolFlag{Name: "debug, d", EnvVar: "APP_DEBUG"},
+		},
+		Action: func(ctx *cli.Context) {
+			if ctx.Bool("debug") != true {
+				t.Errorf("main name not set from env")
+			}
+			if ctx.Bool("d") != true {
+				t.Errorf("short name not set from env")
+			}
+		},
+	}
+	a.Run([]string{"run"})
+}
+
+func TestParseMultiBoolT(t *testing.T) {
+	a := cli.App{
+		Flags: []cli.Flag{
+			cli.BoolTFlag{Name: "serve, s"},
+		},
+		Action: func(ctx *cli.Context) {
+			if ctx.BoolT("serve") != true {
+				t.Errorf("main name not set")
+			}
+			if ctx.BoolT("s") != true {
+				t.Errorf("short name not set")
+			}
+		},
+	}
+	a.Run([]string{"run", "--serve"})
+}
+
+func TestParseMultiBoolTFromEnv(t *testing.T) {
+	os.Setenv("APP_DEBUG", "0")
+	a := cli.App{
+		Flags: []cli.Flag{
+			cli.BoolTFlag{Name: "debug, d", EnvVar: "APP_DEBUG"},
+		},
+		Action: func(ctx *cli.Context) {
+			if ctx.BoolT("debug") != false {
+				t.Errorf("main name not set from env")
+			}
+			if ctx.BoolT("d") != false {
+				t.Errorf("short name not set from env")
+			}
+		},
+	}
+	a.Run([]string{"run"})
 }
 
 type Parser [2]string
@@ -190,4 +563,22 @@ func TestParseGeneric(t *testing.T) {
 		},
 	}
 	a.Run([]string{"run", "-s", "10,20"})
+}
+
+func TestParseGenericFromEnv(t *testing.T) {
+	os.Setenv("APP_SERVE", "20,30")
+	a := cli.App{
+		Flags: []cli.Flag{
+			cli.GenericFlag{Name: "serve, s", Value: &Parser{}, EnvVar: "APP_SERVE"},
+		},
+		Action: func(ctx *cli.Context) {
+			if !reflect.DeepEqual(ctx.Generic("serve"), &Parser{"20", "30"}) {
+				t.Errorf("main name not set from env")
+			}
+			if !reflect.DeepEqual(ctx.Generic("s"), &Parser{"20", "30"}) {
+				t.Errorf("short name not set from env")
+			}
+		},
+	}
+	a.Run([]string{"run"})
 }

@@ -9,9 +9,15 @@ import (
 )
 
 var (
-	BashCompletionFlag = BoolFlag{"generate-bash-completion", "", ""}
-	VersionFlag        = BoolFlag{"version, v", "print the version", ""}
-	HelpFlag           = BoolFlag{"help, h", "show help", ""}
+	BashCompletionFlag = BoolFlag{
+		Name: "generate-bash-completion",
+	}
+	VersionFlag = BoolFlag{
+		Name: "version, v",
+	}
+	HelpFlag = BoolFlag{
+		Name: "help, h",
+	}
 )
 
 type Flag interface {
@@ -22,7 +28,6 @@ type Flag interface {
 
 func flagSet(name string, flags []Flag) *flag.FlagSet {
 	set := flag.NewFlagSet(name, flag.ContinueOnError)
-
 	for _, f := range flags {
 		f.Apply(set)
 	}
@@ -156,7 +161,7 @@ func (f IntSliceFlag) Apply(set *flag.FlagSet) {
 			for _, s := range strings.Split(envVal, ",") {
 				err := newVal.Set(s)
 				if err != nil {
-					fmt.Fprintf(os.Stderr, err.Error())
+					fmt.Fprintf(os.Stderr, "%v", err)
 				}
 			}
 			f.Value = newVal
