@@ -11,31 +11,27 @@ var AppHelpTemplate = `NAME:
    {{.Name}} - {{.Usage}}
 
 USAGE:
-   {{.Name}} {{ if .Flags }}[global options] {{ end }}command{{ if .Flags }} [command options]{{ end }} [arguments...]
+   {{.Name}} {{if .Flags}}[global options] {{end}}command{{if .Flags}} [command options]{{end}} [arguments...]
 
 VERSION:
-   {{.Version}}{{if or .Author .Email}}
-
-AUTHOR:{{if .Author}}
-  {{.Author}}{{if .Email}} - <{{.Email}}>{{end}}{{else}}
-  {{.Email}}{{end}}{{end}}
+   {{.Version}}
 
 COMMANDS:
    {{range .Commands}}{{.Name}}{{with .ShortName}}, {{.}}{{end}}{{ "\t" }}{{.Usage}}
-   {{end}}{{ if .Flags }}
+   {{end}}{{if .Flags}}
 GLOBAL OPTIONS:
    {{range .Flags}}{{.}}
-   {{end}}{{ end }}
+   {{end}}{{end}}
 `
 
 var CommandHelpTemplate = `NAME:
    {{.Name}} - {{.Usage}}
 
 USAGE:
-   command {{.Name}}{{ if .Flags }} [command options]{{ end }} [arguments...]
+   command {{.Name}}{{if .Flags}} [command options]{{end}} [arguments...]{{if .Description}}
 
 DESCRIPTION:
-   {{.Description}}{{ if .Flags }}
+   {{.Description}}{{end}}{{if .Flags}}
 
 OPTIONS:
    {{range .Flags}}{{.}}
@@ -46,14 +42,14 @@ var SubcommandHelpTemplate = `NAME:
    {{.Name}} - {{.Usage}}
 
 USAGE:
-   {{.Name}} command{{ if .Flags }} [command options]{{ end }} [arguments...]
+   {{.Name}} command{{if .Flags}} [command options]{{end}} [arguments...]
 
 COMMANDS:
    {{range .Commands}}{{.Name}}{{with .ShortName}}, {{.}}{{end}}{{ "\t" }}{{.Usage}}
-   {{end}}{{ if .Flags }}
+   {{end}}{{if .Flags}}
 OPTIONS:
    {{range .Flags}}{{.}}
-   {{end}}{{ end }}
+   {{end}}{{end}}
 `
 
 var helpCommand = Command{
