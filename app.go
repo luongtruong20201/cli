@@ -14,6 +14,7 @@ type App struct {
 	Commands             []Command
 	Flags                []Flag
 	EnableBashCompletion bool
+	HideHelp             bool
 	BashComplete         func(context *Context)
 	Before               func(context *Context) error
 	Action               func(context *Context)
@@ -45,14 +46,14 @@ func NewApp() *App {
 }
 
 func (a *App) Run(arguments []string) error {
-	if a.Command(helpCommand.Name) == nil {
+	if a.Command(helpCommand.Name) == nil && !a.HideHelp {
 		a.Commands = append(a.Commands, helpCommand)
+		a.appendFlag(HelpFlag)
 	}
 	if a.EnableBashCompletion {
 		a.appendFlag(BashCompletionFlag)
 	}
 	a.appendFlag(VersionFlag)
-	a.appendFlag(HelpFlag)
 	set := flagSet(a.Name, a.Flags)
 	set.SetOutput(ioutil.Discard)
 	err := set.Parse(arguments[1:])
@@ -100,14 +101,14 @@ func (a *App) Run(arguments []string) error {
 
 func (a *App) RunAsSubcommand(ctx *Context) error {
 	if len(a.Commands) > 0 {
-		if a.Command(helpCommand.Name) == nil {
+		if a.Command(helpCommand.Name) == nil && !a.HideHelp {
 			a.Commands = append(a.Commands, helpCommand)
+			a.appendFlag(HelpFlag)
 		}
 	}
 	if a.EnableBashCompletion {
 		a.appendFlag(BashCompletionFlag)
 	}
-	a.appendFlag(HelpFlag)
 	set := flagSet(a.Name, a.Flags)
 	set.SetOutput(ioutil.Discard)
 	err := set.Parse(ctx.Args().Tail())

@@ -17,16 +17,19 @@ type Command struct {
 	Subcommands     []Command
 	Flags           []Flag
 	SkipFlagParsing bool
+	HideHelp        bool
 }
 
 func (c Command) Run(ctx *Context) error {
 	if len(c.Subcommands) > 0 || c.Before != nil {
 		return c.startApp(ctx)
 	}
-	c.Flags = append(
-		c.Flags,
-		HelpFlag,
-	)
+	if !c.HideHelp {
+		c.Flags = append(
+			c.Flags,
+			HelpFlag,
+		)
+	}
 	if ctx.App.EnableBashCompletion {
 		c.Flags = append(c.Flags, BashCompletionFlag)
 	}
@@ -89,6 +92,7 @@ func (c Command) startApp(ctx *Context) error {
 	}
 	app.Commands = c.Subcommands
 	app.Flags = c.Flags
+	app.HideHelp = c.HideHelp
 	app.EnableBashCompletion = ctx.App.EnableBashCompletion
 	if c.BashComplete != nil {
 		app.BashComplete = c.BashComplete
