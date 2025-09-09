@@ -22,7 +22,6 @@ func TestBoolFlagHelpOutput(t *testing.T) {
 			Name: tc.name,
 		}
 		output := flag.String()
-		fmt.Println("check output:", output)
 		if output != tc.expected {
 			t.Errorf("%s does not match %s", output, tc.expected)
 		}
@@ -46,7 +45,6 @@ func TestStringFlagHelpOutput(t *testing.T) {
 			Value: tc.value,
 		}
 		output := flag.String()
-		fmt.Println("check output:", output)
 		if output != tc.expected {
 			t.Errorf("%s does not match %s", output, tc.expected)
 		}
@@ -73,7 +71,6 @@ func TestStringFlagWithEnvVarHelpOutput(t *testing.T) {
 			EnvVar: "APP_FOO",
 		}
 		output := flag.String()
-		fmt.Println("check output:", output)
 		if !strings.HasSuffix(output, " [$APP_FOO]") {
 			t.Errorf("%s does not end with [$APP_FOO]", output)
 		}
@@ -86,10 +83,39 @@ func TestStringSliceFlagHelpOutput(t *testing.T) {
 		value    *cli.StringSlice
 		expected string
 	}{
-		{"help", &cli.StringSlice{""}, "--help '--help option --help option'\t"},
-		{"h", &cli.StringSlice{""}, "-h '-h option -h option'\t"},
-		{"h", &cli.StringSlice{""}, "-h '-h option -h option'\t"},
-		{"test", &cli.StringSlice{"Something"}, "--test '--test option --test option'\t"},
+		{
+			name: "help",
+			value: func() *cli.StringSlice {
+				s := &cli.StringSlice{}
+				s.Set("")
+				return s
+			}(),
+			expected: "--help '--help option --help option'\t",
+		},
+		{
+			name: "h",
+			value: func() *cli.StringSlice {
+				s := &cli.StringSlice{}
+				s.Set("")
+				return s
+			}(),
+			expected: "-h '-h option -h option'\t"},
+		{
+			name: "h",
+			value: func() *cli.StringSlice {
+				s := &cli.StringSlice{}
+				s.Set("")
+				return s
+			}(),
+			expected: "-h '-h option -h option'\t"},
+		{
+			name: "test",
+			value: func() *cli.StringSlice {
+				s := &cli.StringSlice{}
+				s.Set("Something")
+				return s
+			}(),
+			expected: "--test '--test option --test option'\t"},
 	}
 
 	for _, test := range testCases {
@@ -98,7 +124,6 @@ func TestStringSliceFlagHelpOutput(t *testing.T) {
 			Value: test.value,
 		}
 		output := flag.String()
-		fmt.Println("check output:", output)
 		if output != test.expected {
 			t.Errorf("%s does not match %s", output, test.expected)
 		}
@@ -121,7 +146,6 @@ func TestStringSliceFlagWithEnvVarHelpOutput(t *testing.T) {
 	for _, test := range testCases {
 		flag := cli.StringSliceFlag{Name: test.name, Value: test.value, EnvVar: "APP_QWWX"}
 		output := flag.String()
-		fmt.Println("check output:", output)
 		if !strings.HasSuffix(output, " [$APP_QWWX]") {
 			t.Errorf("%q does not end with [$APP_QWWX]", output)
 		}
@@ -139,7 +163,6 @@ func TestIntFlagHelpOutput(t *testing.T) {
 	for _, test := range testCases {
 		flag := cli.IntFlag{Name: test.name}
 		output := flag.String()
-		fmt.Println("check output:", output)
 		if output != test.expected {
 			t.Errorf("%s does not match %s", output, test.expected)
 		}
@@ -158,7 +181,6 @@ func TestIntFlagWithEnvVarHelpOutput(t *testing.T) {
 	for _, test := range testCases {
 		flag := cli.IntFlag{Name: test.name, EnvVar: "APP_BAR"}
 		output := flag.String()
-		fmt.Println("check output:", output)
 		if !strings.HasSuffix(output, " [$APP_BAR]") {
 			t.Errorf("%s does not end with [$APP_BAR]", output)
 		}
@@ -171,15 +193,34 @@ func TestIntSliceFlagHelpOutput(t *testing.T) {
 		value    *cli.IntSlice
 		expected string
 	}{
-		{"help", &cli.IntSlice{}, "--help '--help option --help option'\t"},
-		{"h", &cli.IntSlice{}, "-h '-h option -h option'\t"},
-		{"h", &cli.IntSlice{}, "-h '-h option -h option'\t"},
-		{"test", &cli.IntSlice{9}, "--test '--test option --test option'\t"},
+		{
+			name:     "help",
+			value:    &cli.IntSlice{},
+			expected: "--help '--help option --help option'\t",
+		},
+		{
+			name:     "h",
+			value:    &cli.IntSlice{},
+			expected: "-h '-h option -h option'\t",
+		},
+		{
+			name:     "h",
+			value:    &cli.IntSlice{},
+			expected: "-h '-h option -h option'\t",
+		},
+		{
+			name: "test",
+			value: func() *cli.IntSlice {
+				s := &cli.IntSlice{}
+				s.Set("9")
+				return s
+			}(),
+			expected: "--test '--test option --test option'\t",
+		},
 	}
 	for _, test := range testCases {
 		flag := cli.IntSliceFlag{Name: test.name, Value: test.value}
 		output := flag.String()
-		fmt.Println("check output:", output)
 		if output != test.expected {
 			t.Errorf("%q does not match %q", output, test.expected)
 		}
@@ -202,7 +243,6 @@ func TestIntSliceFlagWithEnvVarHelpOutput(t *testing.T) {
 	for _, test := range testCases {
 		flag := cli.IntSliceFlag{Name: test.name, Value: test.value, EnvVar: "APP_SMURF"}
 		output := flag.String()
-		fmt.Println("check output:", output)
 		if !strings.HasSuffix(output, " [$APP_SMURF]") {
 			t.Errorf("%q does not end with [$APP_SMURF]", output)
 		}
@@ -220,7 +260,6 @@ func TestFloat64FlagHelpOutput(t *testing.T) {
 	for _, test := range testCases {
 		flag := cli.Float64Flag{Name: test.name}
 		output := flag.String()
-		fmt.Println("check output:", output)
 		if output != test.expected {
 			t.Errorf("%s does not match %s", output, test.expected)
 		}
@@ -239,7 +278,6 @@ func TestFloat64FlagWithEnvVarHelpOutput(t *testing.T) {
 	for _, test := range testCases {
 		flag := cli.Float64Flag{Name: test.name, EnvVar: "APP_BAZ"}
 		output := flag.String()
-		fmt.Println("check output:", output)
 		if !strings.HasSuffix(output, " [$APP_BAZ]") {
 			t.Errorf("%s does not end with [$APP_BAZ]", output)
 		}
@@ -259,7 +297,6 @@ func TestGenericFlagHelpOutput(t *testing.T) {
 	for _, test := range testCases {
 		flag := cli.GenericFlag{Name: test.name}
 		output := flag.String()
-		fmt.Println("check output:", output)
 
 		if output != test.expected {
 			t.Errorf("%q does not match %q", output, test.expected)
@@ -281,7 +318,6 @@ func TestGenericFlagWithEnvVarHelpOutput(t *testing.T) {
 	for _, test := range testCases {
 		flag := cli.GenericFlag{Name: test.name, EnvVar: "APP_ZAP"}
 		output := flag.String()
-		fmt.Println("check output:", output)
 
 		if !strings.HasSuffix(output, " [$APP_ZAP]") {
 			t.Errorf("%s does not end with [$APP_ZAP]", output)
