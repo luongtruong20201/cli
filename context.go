@@ -5,6 +5,7 @@ import (
 	"flag"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Context struct {
@@ -25,6 +26,10 @@ func NewContext(app *App, set *flag.FlagSet, globalSet *flag.FlagSet) *Context {
 
 func (c *Context) Int(name string) int {
 	return lookupInt(name, c.flagSet)
+}
+
+func (c *Context) Duration(name string) time.Duration {
+	return lookupDuration(name, c.flagSet)
 }
 
 func (c *Context) Float64(name string) float64 {
@@ -57,6 +62,10 @@ func (c *Context) Generic(name string) interface{} {
 
 func (c *Context) GlobalInt(name string) int {
 	return lookupInt(name, c.globalSet)
+}
+
+func (c *Context) GlobalDuration(name string) time.Duration {
+	return lookupDuration(name, c.globalSet)
 }
 
 func (c *Context) GlobalBool(name string) bool {
@@ -134,6 +143,16 @@ func lookupInt(name string, set *flag.FlagSet) int {
 			return 0
 		}
 		return val
+	}
+	return 0
+}
+
+func lookupDuration(name string, set *flag.FlagSet) time.Duration {
+	if f := set.Lookup(name); f != nil {
+		val, err := time.ParseDuration(f.Value.String())
+		if err == nil {
+			return val
+		}
 	}
 	return 0
 }

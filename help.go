@@ -56,13 +56,14 @@ var helpCommand = Command{
 	Name:      "help",
 	ShortName: "h",
 	Usage:     "Shows a list of commands or help for one command",
-	Action: func(c *Context) {
+	Action: func(c *Context) error {
 		args := c.Args()
 		if args.Present() {
 			ShowCommandHelp(c, args.First())
 		} else {
 			ShowAppHelp(c)
 		}
+		return nil
 	},
 }
 
@@ -70,13 +71,14 @@ var helpSubcommand = Command{
 	Name:      "help",
 	ShortName: "h",
 	Usage:     "Shows a list of commands or help for one command",
-	Action: func(c *Context) {
+	Action: func(c *Context) error {
 		args := c.Args()
 		if args.Present() {
 			ShowCommandHelp(c, args.First())
 		} else {
 			ShowSubcommandHelp(c)
 		}
+		return nil
 	},
 }
 
@@ -110,7 +112,7 @@ func ShowCommandHelp(c *Context, command string) {
 }
 
 func ShowSubcommandHelp(c *Context) {
-	HelpPrinter(SubcommandHelpTemplate, c.App)
+	ShowCommandHelp(c, c.Command.Name)
 }
 
 func ShowVersion(c *Context) {

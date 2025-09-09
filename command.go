@@ -13,7 +13,7 @@ type Command struct {
 	Description     string
 	BashComplete    func(context *Context)
 	Before          func(context *Context) error
-	Action          func(context *Context)
+	Action          func(context *Context) error
 	Subcommands     []Command
 	Flags           []Flag
 	SkipFlagParsing bool

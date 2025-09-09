@@ -17,7 +17,7 @@ type App struct {
 	HideHelp             bool
 	BashComplete         func(context *Context)
 	Before               func(context *Context) error
-	Action               func(context *Context)
+	Action               func(context *Context) error
 	CommandNotFound      func(context *Context, command string)
 	Compiled             time.Time
 	Author               string
@@ -93,8 +93,7 @@ func (a *App) Run(arguments []string) error {
 			return c.Run(context)
 		}
 	}
-	a.Action(context)
-	return nil
+	return a.Action(context)
 }
 
 func (a *App) RunAndExitOnError() {

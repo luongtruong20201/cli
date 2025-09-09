@@ -17,7 +17,9 @@ func TestCommandDoNotIgnoreFlags(t *testing.T) {
 		ShortName:   "tc",
 		Usage:       "this is for testing",
 		Description: "testing",
-		Action:      func(_ *cli.Context) {},
+		Action: func(_ *cli.Context) error {
+			return nil
+		},
 	}
 	err := command.Run(c)
 	expect(t, err.Error(), "flag provided but not defined: -break")
@@ -30,11 +32,13 @@ func TestCommandIgnoreFlags(t *testing.T) {
 	set.Parse(test)
 	c := cli.NewContext(app, set, set)
 	command := cli.Command{
-		Name:            "test-cmd",
-		ShortName:       "tc",
-		Usage:           "this is for testing",
-		Description:     "testing",
-		Action:          func(_ *cli.Context) {},
+		Name:        "test-cmd",
+		ShortName:   "tc",
+		Usage:       "this is for testing",
+		Description: "testing",
+		Action: func(_ *cli.Context) error {
+			return nil
+		},
 		SkipFlagParsing: true,
 	}
 	err := command.Run(c)
