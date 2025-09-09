@@ -99,6 +99,13 @@ func (a *App) Run(arguments []string) error {
 	return nil
 }
 
+func (a *App) RunAndExitOnError() {
+	if err := a.Run(os.Args); err != nil {
+		os.Stderr.WriteString(fmt.Sprintln(err))
+		os.Exit(1)
+	}
+}
+
 func (a *App) RunAsSubcommand(ctx *Context) error {
 	if len(a.Commands) > 0 {
 		if a.Command(helpCommand.Name) == nil && !a.HideHelp {

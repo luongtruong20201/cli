@@ -11,45 +11,45 @@ var AppHelpTemplate = `NAME:
    {{.Name}} - {{.Usage}}
 
 USAGE:
-   {{.Name}} [global options] command [command options] [arguments...]
+   {{.Name}} {{ if .Flags }}[global options] {{ end }}command{{ if .Flags }} [command options]{{ end }} [arguments...]
 
 VERSION:
    {{.Version}}
 
 COMMANDS:
    {{range .Commands}}{{.Name}}{{with .ShortName}}, {{.}}{{end}}{{ "\t" }}{{.Usage}}
-   {{end}}
+   {{end}}{{ if .Flags }}
 GLOBAL OPTIONS:
    {{range .Flags}}{{.}}
-   {{end}}
+   {{end}}{{ end }}
 `
 
 var CommandHelpTemplate = `NAME:
    {{.Name}} - {{.Usage}}
 
 USAGE:
-   command {{.Name}} [command options] [arguments...]
+   command {{.Name}}{{ if .Flags }} [command options]{{ end }} [arguments...]
 
 DESCRIPTION:
-   {{.Description}}
+   {{.Description}}{{ if .Flags }}
 
 OPTIONS:
    {{range .Flags}}{{.}}
-   {{end}}
+   {{end}}{{ end }}
 `
 
 var SubcommandHelpTemplate = `NAME:
    {{.Name}} - {{.Usage}}
 
 USAGE:
-   {{.Name}} [global options] command [command options] [arguments...]
+   {{.Name}} [global options] command{{ if .Flags }} [command options]{{ end }} [arguments...]
 
 COMMANDS:
    {{range .Commands}}{{.Name}}{{with .ShortName}}, {{.}}{{end}}{{ "\t" }}{{.Usage}}
-   {{end}}
+   {{end}}{{ if .Flags }}
 OPTIONS:
    {{range .Flags}}{{.}}
-   {{end}}
+   {{end}}{{ end }}
 `
 
 var helpCommand = Command{

@@ -90,6 +90,7 @@ func (c Command) startApp(ctx *Context) error {
 	} else {
 		app.Usage = c.Usage
 	}
+	app.CommandNotFound = ctx.App.CommandNotFound
 	app.Commands = c.Subcommands
 	app.Flags = c.Flags
 	app.HideHelp = c.HideHelp

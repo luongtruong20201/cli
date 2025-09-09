@@ -118,6 +118,14 @@ func (a Args) Present() bool {
 	return len(a) != 0
 }
 
+func (a Args) Swap(from, to int) error {
+	if from >= len(a) || to >= len(a) {
+		return errors.New("index out of range")
+	}
+	a[from], a[to] = a[to], a[from]
+	return nil
+}
+
 func lookupInt(name string, set *flag.FlagSet) int {
 	f := set.Lookup(name)
 	if f != nil {
